@@ -13,8 +13,10 @@ import numpy as np
 
 # - TORCH
 import torch
+from torch.utils.data import Dataset
 import torchvision.transforms.functional as TF
 import torchvision.transforms as T
+
 
 # - SCLASSIFIER-VIT
 from sclassifier_vit.utils import *
