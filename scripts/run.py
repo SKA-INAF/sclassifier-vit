@@ -24,6 +24,21 @@ import torch
 import torchvision.transforms.functional as TF
 import torchvision.transforms as T
 
+# - TRANSFORMERS
+import transformers
+from transformers import pipeline
+from transformers import AutoProcessor, AutoModel
+from transformers import AutoImageProcessor, AutoModelForImageClassification
+from transformers.configuration_utils import PretrainedConfig
+from transformers.modeling_utils import PreTrainedModel
+from transformers.data.data_collator import DataCollator
+from transformers.training_args import TrainingArguments
+from transformers.tokenization_utils_base import PreTrainedTokenizerBase
+from transformers.trainer_utils import EvalPrediction
+from transformers.trainer_callback import TrainerCallback
+from transformers import EvalPrediction    
+import evaluate
+
 # - SCLASSIFIER-VIT
 from sclassifier_vit.utils import *
 from sclassifier_vit.dataset import get_multi_label_target_maps, get_single_label_target_maps
