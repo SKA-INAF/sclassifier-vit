@@ -33,6 +33,7 @@ reqs.append('torchvision')
 reqs.append('tqdm')
 reqs.append('transformers')
 reqs.append('evaluate')
+reqs.append('matplotlib')
 
 
 ##data_dir = 'data'
