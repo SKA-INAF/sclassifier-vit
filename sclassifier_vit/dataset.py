@@ -9,6 +9,7 @@ from __future__ import print_function
 import sys
 import os
 import random
+import numpy as np
 
 # - TORCH
 import torch
@@ -18,6 +19,92 @@ import torchvision.transforms as T
 # - SCLASSIFIER-VIT
 from sclassifier_vit.utils import *
 
+
+######################################
+###      CLASS LABEL SCHEMA
+######################################
+def get_multi_label_target_maps(schema="morph_tags", skip_first_class=False):
+	""" Return multi-label classifier target maps """
+
+	if schema=="morph_tags":
+		id2target= {
+			0: 0, # background
+			1: 1, # radio-galaxy
+			2: 2, # extended
+			3: 3, # diffuse
+			4: 4, # diffuse-large
+			5: 5, # artefact
+		}
+			
+		if skip_first_class:
+			id2label= {
+				0: "BACKGROUND",
+				1: "RADIO-GALAXY",
+				2: "EXTENDED",
+				3: "DIFFUSE",
+				4: "DIFFUSE-LARGE",
+				5: "ARTEFACT"
+			}
+		else:
+			id2label= {
+				0: "RADIO-GALAXY",
+				1: "EXTENDED",
+				2: "DIFFUSE",
+				3: "DIFFUSE-LARGE",
+				4: "ARTEFACT"
+			}
+			
+		
+	# - Compute reverse dict
+	label2id= {v: k for k, v in id2label.items()}
+	
+	return id2label, label2id, id2target
+	
+def get_single_label_target_maps(schema="morph_tags"):
+	""" Return single-label classifier target maps """
+	
+	if schema=="morph_class":
+		id2target= {
+			1: 0, # 1C-1P
+			2: 1, # 1C-2P
+			3: 2, # 1C-3P
+			4: 3, # 2C-2P
+			5: 4, # 2C-3P
+			6: 5, # 3C-3P
+		}
+			
+		id2label= {
+			0: "1C-1P",
+			1: "1C-2P",
+			2: "1C-3P",
+			3: "2C-2P",
+			4: "2C-3P",
+			5: "3C-3P"
+		}
+		
+	elif schema=="morph_tags":
+		id2target= {
+			0: 0, # background
+			1: 1, # radio-galaxy
+			2: 2, # extended
+			3: 3, # diffuse
+			4: 4, # diffuse-large
+			5: 5, # artefact
+		}
+		
+		id2label= {
+			0: "BACKGROUND",
+			1: "RADIO-GALAXY",
+			2: "EXTENDED",
+			3: "DIFFUSE",
+			4: "DIFFUSE-LARGE",
+			5: "ARTEFACT"
+		}
+		
+	# - Compute reverse dict
+	label2id= {v: k for k, v in id2label.items()}
+	
+	return id2label, label2id, id2target
 
 ######################################
 ###      DATASET BASE CLASS
@@ -111,8 +198,8 @@ class MultiLabelDataset(AstroImageDataset):
 		nclasses=None,
 		id2target=None,
 		target2label=None,
-		label_schema="radioimg_morph_tags",
-		skip_first_class=False
+		#label_schema="radioimg_morph_tags",
+		#skip_first_class=False
 	):
 		super().__init__(
 			filename, 
@@ -121,39 +208,42 @@ class MultiLabelDataset(AstroImageDataset):
 			apply_zscale, zscale_contrast,
 			resize, resize_size
 		)
-		self.skip_first_class= skip_first_class
-		self.label_schema= label_schema
+		#self.skip_first_class= skip_first_class
+		#self.label_schema= label_schema
 		
-		if nclasses is None or id2target is None or target2label is None:
-			__set_default_label_schema(label_schema)
-		else:
-			self.nclasses= nclasses
-			self.id2target= id2target
-			self.target2label= target2label
+		#if nclasses is None or id2target is None or target2label is None:
+		#	__set_default_label_schema(label_schema)
+		#else:
+		#	self.nclasses= nclasses
+		#	self.id2target= id2target
+		#	self.target2label= target2label
 		
+		self.nclasses= nclasses
+		self.id2target= id2target
+		self.target2label= target2label
 		self.mlb = MultiLabelBinarizer(classes=np.arange(0, self.nclasses))
 
-	def __set_default_label_schema(self, schema):
-		""" Set the default label schema """
+	#def __set_default_label_schema(self, schema):
+	#	""" Set the default label schema """
 		
-		if schema=="radioimg_morph_tags":
-			self.nclasses= 6
-			self.id2target= {
-				0: 0, # background
-				1: 1, # radio-galaxy
-				2: 2, # extended
-				3: 3, # diffuse
-				4: 4, # diffuse-large
-				5: 5, # artefact
-			}
-			self.target2label= {
-				0: "BACKGROUND",
-				1: "RADIO-GALAXY",
-				2: "EXTENDED",
-				3: "DIFFUSE",
-				4: "DIFFUSE-LARGE",
-				5: "ARTEFACT"
-			}
+	#	if schema=="radioimg_morph_tags":
+	#		self.nclasses= 6
+	#		self.id2target= {
+	#			0: 0, # background
+	#			1: 1, # radio-galaxy
+	#			2: 2, # extended
+	#			3: 3, # diffuse
+	#			4: 4, # diffuse-large
+	#			5: 5, # artefact
+	#		}
+	#		self.target2label= {
+	#			0: "BACKGROUND",
+	#			1: "RADIO-GALAXY",
+	#			2: "EXTENDED",
+	#			3: "DIFFUSE",
+	#			4: "DIFFUSE-LARGE",
+	#			5: "ARTEFACT"
+	#		}
 	
 	def __getitem__(self, idx):
 		""" Iterator providing training data (pixel_values + labels) """
@@ -173,8 +263,8 @@ class MultiLabelDataset(AstroImageDataset):
 		
 		# - Get class id (hot encoding)
 		class_ids_hotenc= self.mlb.fit_transform([class_ids])
-		if self.skip_first_class:
-			class_ids_hotenc= class_ids_hotenc[:, 1:self.nclasses]
+		#if self.skip_first_class:
+		#	class_ids_hotenc= class_ids_hotenc[:, 1:self.nclasses]
 		
 		class_ids_hotenc = [j for sub in class_ids_hotenc for j in sub]
 		class_ids_hotenc= torch.from_numpy(np.array(class_ids_hotenc).astype(np.float32))
@@ -198,7 +288,7 @@ class SingleLabelDataset(AstroImageDataset):
 			nclasses=None,
 			id2target=None,
 			target2label=None,
-			label_schema="radioimg_morph_tags"
+			#label_schema="radioimg_morph_tags"
 		):
 		super().__init__(
 			filename, 
@@ -208,38 +298,41 @@ class SingleLabelDataset(AstroImageDataset):
 			resize, resize_size
 		)	
 		
-		self.label_schema= label_schema
+		#self.label_schema= label_schema
 		
-		if nclasses is None or id2target is None or target2label is None:
-			__set_default_label_schema(label_schema)
-		else:
-			self.nclasses= nclasses
-			self.id2target= id2target
-			self.target2label= target2label
+		#if nclasses is None or id2target is None or target2label is None:
+		#	__set_default_label_schema(label_schema)
+		#else:
+		#	self.nclasses= nclasses
+		#	self.id2target= id2target
+		#	self.target2label= target2label
 		
+		self.nclasses= nclasses
+		self.id2target= id2target
+		self.target2label= target2label
 		self.mlb = MultiLabelBinarizer(classes=np.arange(0, self.nclasses))
 
-	def __set_default_label_schema(self, schema):
-		""" Set the default label schema """
+	#def __set_default_label_schema(self, schema):
+	#	""" Set the default label schema """
 		
-		if schema=="radioimg_morph_tags":
-			self.nclasses= 6
-			self.id2target= {
-				1: 0, # 1C-1P
-				2: 1, # 1C-2P
-				3: 2, # 1C-3P
-				4: 3, # 2C-2P
-				5: 4, # 2C-3P
-				6: 5, # 3C-3P
-			}
-			self.target2label= {
-				0: "1C-1P",
-				1: "1C-2P",
-				2: "1C-3P",
-				3: "2C-2P",
-				4: "2C-3P",
-				5: "3C-3P"
-			}
+	#	if schema=="radioimg_morph_tags":
+	#		self.nclasses= 6
+	#		self.id2target= {
+	#			1: 0, # 1C-1P
+	#			2: 1, # 1C-2P
+	#			3: 2, # 1C-3P
+	#			4: 3, # 2C-2P
+	#			5: 4, # 2C-3P
+	#			6: 5, # 3C-3P
+	#		}
+	#		self.target2label= {
+	#			0: "1C-1P",
+	#			1: "1C-2P",
+	#			2: "1C-3P",
+	#			3: "2C-2P",
+	#			4: "2C-3P",
+	#			5: "3C-3P"
+	#		}
 		
 		
 	def __getitem__(self, idx):
