@@ -542,7 +542,7 @@ def load_img_as_pil_float(filename, resize=False, resize_size=224, apply_zscale=
   # - Convert to PIL image
   return Image.fromarray(data)
 
-def load_img_as_pil_rgb(filename, resize=False, resize_size=224, apply_zscale=True, contrast=0.25, set_nans_to_min=False, verbose=False):
+def load_img_as_pil_rgb(filename, resize=False, resize_size=224, apply_zscale=True, contrast=0.25, set_nans_to_min=False, to_uint8=False, verbose=False):
   """ Convert numpy array to PIL 3chan RGB image norm to [0,255], uint8 """
 
   # - Read FITS from file and get transformed npy array
@@ -552,7 +552,7 @@ def load_img_as_pil_rgb(filename, resize=False, resize_size=224, apply_zscale=Tr
     norm_range=(0.,255.),
     resize=resize, resize_size=resize_size,
     apply_zscale=apply_zscale, contrast=contrast,
-    to_uint8=True,
+    to_uint8=to_uint8,
     set_nans_to_min=set_nans_to_min,
     verbose=verbose
   )

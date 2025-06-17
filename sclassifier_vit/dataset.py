@@ -162,7 +162,8 @@ class AstroImageDataset(Dataset):
 				image_path, 
 				resize=self.resize, resize_size=self.resize_size, 
 				apply_zscale=self.apply_zscale, contrast=self.zscale_contrast, 
-				set_nans_to_min=False, 
+				set_nans_to_min=False,
+				to_uint8=False, 
 				verbose=False
 			)
 			
