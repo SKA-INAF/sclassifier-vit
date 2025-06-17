@@ -24,6 +24,10 @@ import torch
 import torchvision.transforms.functional as TF
 import torchvision.transforms as T
 
+# - TRANSFORMERS
+from transformers.trainer_utils import EvalPrediction
+from transformers import EvalPrediction    
+
 # - SCLASSIFIER-VIT
 from sclassifier_vit.utils import *
 from sclassifier_vit import logger
