@@ -147,7 +147,7 @@ class AstroImageDataset(Dataset):
 		# - Read image (FITS/natural image supported) and then convert to PIL either as 1D or RGB image
 		if self.load_as_gray:
 			img= load_img_as_pil_float(
-				filename, 
+				image_path, 
 				resize=self.resize, resize_size=self.resize_size, 
 				apply_zscale=self.apply_zscale, contrast=self.zscale_contrast, 
 				set_nans_to_min=False, 
@@ -155,7 +155,7 @@ class AstroImageDataset(Dataset):
 			)
 		else:
 			img= load_img_as_pil_rgb(
-				self.filename, 
+				image_path, 
 				resize=self.resize, resize_size=self.resize_size, 
 				apply_zscale=self.apply_zscale, contrast=self.zscale_contrast, 
 				set_nans_to_min=False, 
