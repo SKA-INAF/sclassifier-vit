@@ -46,7 +46,8 @@ def get_multi_label_target_maps(schema="morph_tags", skip_first_class=False):
 				3: "DIFFUSE",
 				4: "DIFFUSE-LARGE",
 				5: "ARTEFACT"
-			}
+			}	
+			
 		else:
 			id2label= {
 				0: "RADIO-GALAXY",
@@ -199,7 +200,7 @@ class MultiLabelDataset(AstroImageDataset):
 		resize_size=224,
 		nclasses=None,
 		id2target=None,
-		target2label=None,
+		#target2label=None,
 		#label_schema="radioimg_morph_tags",
 		#skip_first_class=False
 	):
@@ -222,7 +223,6 @@ class MultiLabelDataset(AstroImageDataset):
 		
 		self.nclasses= nclasses
 		self.id2target= id2target
-		self.target2label= target2label
 		self.mlb = MultiLabelBinarizer(classes=np.arange(0, self.nclasses))
 
 	#def __set_default_label_schema(self, schema):
@@ -289,7 +289,7 @@ class SingleLabelDataset(AstroImageDataset):
 			resize_size=224,
 			nclasses=None,
 			id2target=None,
-			target2label=None,
+			#target2label=None,
 			#label_schema="radioimg_morph_tags"
 		):
 		super().__init__(
@@ -311,7 +311,6 @@ class SingleLabelDataset(AstroImageDataset):
 		
 		self.nclasses= nclasses
 		self.id2target= id2target
-		self.target2label= target2label
 		self.mlb = MultiLabelBinarizer(classes=np.arange(0, self.nclasses))
 
 	#def __set_default_label_schema(self, schema):
