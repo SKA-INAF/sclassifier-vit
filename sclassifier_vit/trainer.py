@@ -154,7 +154,7 @@ class MultiLabelClassTrainer(transformers.Trainer):
 				metrics_str= str(metrics_formatted[key])
 				print(f"  {key: <{k_width}} = {metrics_str:>{v_width}}")
 
-	def compute_loss(self, model, inputs, return_outputs=False):
+	def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
 		""" Override trainer compute_loss function """
 		
 		pixel_values= inputs.get("pixel_values")
@@ -299,7 +299,7 @@ class SingleLabelClassTrainer(transformers.Trainer):
 				metrics_str= str(metrics_formatted[key])
 				print(f"  {key: <{k_width}} = {metrics_str:>{v_width}}")
 
-	def compute_loss(self, model, inputs, return_outputs=False):
+	def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
 		""" Override trainer compute_loss function """
 		
 		pixel_values= inputs.get("pixel_values")
