@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Un
 # - TORCH
 import torch
 from torch import nn
+from torch.utils.data import Dataset
 import torchvision.transforms.functional as TF
 import torchvision.transforms as T
 
