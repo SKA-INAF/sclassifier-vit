@@ -32,6 +32,7 @@ reqs.append('torch')
 reqs.append('torchvision')
 reqs.append('tqdm')
 reqs.append('transformers')
+reqs.append('accelerate')
 reqs.append('evaluate')
 reqs.append('matplotlib')
 

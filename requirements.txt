@@ -7,5 +7,6 @@ torch
 torchvision
 tqdm
 transformers
+accelerate
 evaluate
 matplotlib
