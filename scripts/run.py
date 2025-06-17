@@ -208,6 +208,17 @@ def main():
 	nclasses= len(id2target)   # - This counts all classes (e.g. 6)
 	num_labels= len(id2label)  # - If skip_first_class, this is =5
 	label_names= list(label2id.keys())
+	
+	print("id2label")
+	print(id2label)
+	print("label2id")
+	print(label2id)
+	print("id2target")
+	print(id2target)
+	print("num_labels")
+	print(num_labels)
+	print("nclasses")
+	print(nclasses)
 
 	##################################
 	##     MODEL
@@ -334,7 +345,7 @@ def main():
 				load_as_gray=args.grayscale,
 				apply_zscale=args.zscale, zscale_contrast=args.zscale_contrast,
 				resize=args.resize, resize_size=args.resize_size,
-				nclasses=num_labels,
+				nclasses=nclasses,
 				id2target=id2target
 			)
 		else:
@@ -345,7 +356,7 @@ def main():
 				load_as_gray=args.grayscale,
 				apply_zscale=args.zscale, zscale_contrast=args.zscale_contrast,
 				resize=args.resize, resize_size=args.resize_size,
-				nclasses=num_labels,
+				nclasses=nclasses,
 				id2target=id2target
 			)
 		nsamples= dataset.get_sample_size()
@@ -360,7 +371,7 @@ def main():
 				load_as_gray=args.grayscale,
 				apply_zscale=args.zscale, zscale_contrast=args.zscale_contrast,
 				resize=args.resize, resize_size=args.resize_size,
-				nclasses=num_labels,
+				nclasses=nclasses,
 				id2target=id2target
 			)
 		else:
@@ -371,7 +382,7 @@ def main():
 				load_as_gray=args.grayscale,
 				apply_zscale=args.zscale, zscale_contrast=args.zscale_contrast,
 				resize=args.resize, resize_size=args.resize_size,
-				nclasses=num_labels,
+				nclasses=nclasses,
 				id2target=id2target
 			)
 		nsamples= dataset.get_sample_size()
@@ -386,7 +397,7 @@ def main():
 					load_as_gray=args.grayscale,
 					apply_zscale=args.zscale, zscale_contrast=args.zscale_contrast,
 					resize=args.resize, resize_size=args.resize_size,
-					nclasses=num_labels,
+					nclasses=nclasses,
 					id2target=id2target
 				)
 			else:
@@ -397,7 +408,7 @@ def main():
 					load_as_gray=args.grayscale,
 					apply_zscale=args.zscale, zscale_contrast=args.zscale_contrast,
 					resize=args.resize, resize_size=args.resize_size,
-					nclasses=num_labels,
+					nclasses=nclasses,
 					id2target=id2target
 				)
 			nsamples_cv= dataset_cv.get_sample_size()
