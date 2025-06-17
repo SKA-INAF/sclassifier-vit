@@ -97,11 +97,14 @@ def get_args():
 	
 	parser.add_argument('-nepochs', '--nepochs', dest='nepochs', required=False, type=int, default=1, action='store',help='Number of epochs used in network training (default=100)')	
 	parser.add_argument('-optimizer', '--optimizer', dest='optimizer', required=False, type=str, default='adamw', action='store',help='Optimizer used (default=rmsprop)')
+	parser.add_argument('-lr_scheduler', '--lr_scheduler', dest='lr_scheduler', required=False, type=str, default='constant', action='store',help='Learning rate scheduler used {constant, linear, cosine, cosine_with_min_lr} (default=constant)')
 	parser.add_argument('-learning_rate', '--learning_rate', dest='learning_rate', required=False, type=float, default=5e-5, action='store',help='Learning rate (default=5e-5)')
+	parser.add_argument('-warmup_ratio', '--warmup_ratio', dest='warmup_ratio', required=False, type=float, default=0.2, action='store',help='Warmup ratio par (default=0.2)')
 	parser.add_argument('-batch_size', '--batch_size', dest='batch_size', required=False, type=int, default=8, action='store',help='Batch size used in training (default=8)')
-	parser.add_argument('--use_warmup_lr_schedule', dest='use_warmup_lr_schedule', action='store_true',help='Use linear warmup+cos decay schedule to update learning rate (default=false)')	
-	parser.set_defaults(use_warmup_lr_schedule=False)
-	parser.add_argument('-nepochs_warmup', '--nepochs_warmup', dest='nepochs_warmup', required=False, type=int, default=10, action='store',help='Number of epochs used in network training for warmup (default=100)')
+	
+	#parser.add_argument('--use_warmup_lr_schedule', dest='use_warmup_lr_schedule', action='store_true',help='Use linear warmup+cos decay schedule to update learning rate (default=false)')	
+	#parser.set_defaults(use_warmup_lr_schedule=False)
+	#parser.add_argument('-nepochs_warmup', '--nepochs_warmup', dest='nepochs_warmup', required=False, type=int, default=10, action='store',help='Number of epochs used in network training for warmup (default=100)')
 
 	parser.add_argument('-augmenter', '--augmenter', dest='augmenter', required=False, type=str, default='v1', action='store',help='Predefined augmenter to be used (default=v1)')
 	parser.add_argument('--skip_first_class', dest='skip_first_class', action='store_true',help='Skip first class (e.g. NONE/BACKGROUND) in multilabel classifier (default=false)')	
@@ -176,10 +179,12 @@ def main():
 	# - Set hyperparameters
 	sigmoid_thr= 0.5
 	learning_rate= args.learning_rate
+	lr_scheduler= args.lr_scheduler
 	nepochs= args.nepochs
 	batch_size= args.batch_size
-	use_warmup_lr_schedule= args.use_warmup_lr_schedule
-	nepochs_warmup= args.nepochs_warmup
+	warmup_ratio= args.warmup_ratio
+	#use_warmup_lr_schedule= args.use_warmup_lr_schedule
+	#nepochs_warmup= args.nepochs_warmup
 	save_model_every_epoch= args.save_model_every_epoch
 	max_checkpoints= args.max_checkpoints
 	augmenter= args.augmenter
@@ -446,27 +451,34 @@ def main():
 	training_opts.set_optimizer(name="adamw_torch", learning_rate=learning_rate)
 	
 	# - Set scheduler
-	#scheduler= transformers.get_constant_schedule(optimizer)
-	training_opts.set_lr_scheduler(name="linear", num_epochs=nepochs)
-	num_warmup_steps= 0
-	#if use_warmup_lr_schedule:
-	#	num_training_steps=nsamples*nepochs
-	#	num_warmup_steps=nsamples*nepochs_warmup
-	#	logger.info("Setting cosine schedule with warmup (nsteps=%d, nsteps_warmup=%d" % (num_training_steps, num_warmup_steps))
+	training_opts.set_lr_scheduler(
+		name=lr_scheduler, 
+		num_epochs=nepochs,
+		warmup_ratio=warmup_ratio
+	)
 	
-		#scheduler= transformers.get_cosine_schedule_with_warmup(
-		#	optimizer,
-		#	num_training_steps=num_training_steps,
-		#	num_warmup_steps=num_warmup_steps
-		#)
+	
+	##scheduler= transformers.get_constant_schedule(optimizer)
+	#training_opts.set_lr_scheduler(name="linear", num_epochs=nepochs)
+	#num_warmup_steps= 0
+	##if use_warmup_lr_schedule:
+	##	num_training_steps=nsamples*nepochs
+	##	num_warmup_steps=nsamples*nepochs_warmup
+	##	logger.info("Setting cosine schedule with warmup (nsteps=%d, nsteps_warmup=%d" % (num_training_steps, num_warmup_steps))
+	
+	#	#scheduler= transformers.get_cosine_schedule_with_warmup(
+	#	#	optimizer,
+	#	#	num_training_steps=num_training_steps,
+	#	#	num_warmup_steps=num_warmup_steps
+	#	#)
 		
-		#training_opts.set_lr_scheduler(
-		#	name="cosine", 
-		#	num_epochs=nepochs,
-		#	warmup_steps=num_warmup_steps
-		#)
+	#	#training_opts.set_lr_scheduler(
+	#	#	name="cosine", 
+	#	#	num_epochs=nepochs,
+	#	#	warmup_steps=num_warmup_steps
+	#	#)
 	
-	print("training options")
+	print("--> training options")
 	print(training_opts)
 	
 	# - Set metrics
