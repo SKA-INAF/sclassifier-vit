@@ -11,6 +11,9 @@ import os
 import random
 import numpy as np
 
+# - PIL
+from PIL import Image
+
 # - SKLEARN
 from sklearn.preprocessing import MultiLabelBinarizer
 
