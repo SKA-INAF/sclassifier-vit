@@ -36,7 +36,8 @@ from transformers.training_args import TrainingArguments
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 from transformers.trainer_utils import EvalPrediction
 from transformers.trainer_callback import TrainerCallback
-from transformers import EvalPrediction    
+from transformers import EvalPrediction 
+from transformers import AdamW   
 import evaluate
 
 # - SCLASSIFIER-VIT
@@ -96,9 +97,10 @@ def get_args():
 	parser.add_argument('-modelfile', '--modelfile', dest='modelfile', required=False, type=str, default="google/siglip-so400m-patch14-384", action='store',help='Model pretrained file name or weight path to be loaded {google/siglip-large-patch16-256, google/siglip-base-patch16-256, google/siglip-base-patch16-256-i18n, google/siglip-so400m-patch14-384, google/siglip-base-patch16-224}')
 	
 	parser.add_argument('-nepochs', '--nepochs', dest='nepochs', required=False, type=int, default=1, action='store',help='Number of epochs used in network training (default=100)')	
-	parser.add_argument('-optimizer', '--optimizer', dest='optimizer', required=False, type=str, default='adamw', action='store',help='Optimizer used (default=rmsprop)')
+	#parser.add_argument('-optimizer', '--optimizer', dest='optimizer', required=False, type=str, default='adamw', action='store',help='Optimizer used (default=rmsprop)')
 	parser.add_argument('-lr_scheduler', '--lr_scheduler', dest='lr_scheduler', required=False, type=str, default='constant', action='store',help='Learning rate scheduler used {constant, linear, cosine, cosine_with_min_lr} (default=constant)')
-	parser.add_argument('-learning_rate', '--learning_rate', dest='learning_rate', required=False, type=float, default=5e-5, action='store',help='Learning rate (default=5e-5)')
+	parser.add_argument('-lr', '--lr', dest='lr', required=False, type=float, default=5e-5, action='store',help='Learning rate (default=5e-5)')
+	parser.add_argument('-min_lr', '--min_lr', dest='min_lr', required=False, type=float, default=1e-6, action='store',help='Learning rate min used in cosine_with_min_lr (default=1.e-6)')
 	parser.add_argument('-warmup_ratio', '--warmup_ratio', dest='warmup_ratio', required=False, type=float, default=0.2, action='store',help='Warmup ratio par (default=0.2)')
 	parser.add_argument('-batch_size', '--batch_size', dest='batch_size', required=False, type=int, default=8, action='store',help='Batch size used in training (default=8)')
 	
@@ -163,6 +165,8 @@ def main():
 	
 	# - Run options
 	device_choice= args.device
+	device = torch.device(device_choice if torch.cuda.is_available() else "cpu")
+	
 	multilabel= args.multilabel
 	predict= args.predict
 	inference= args.inference
@@ -178,7 +182,8 @@ def main():
 
 	# - Set hyperparameters
 	sigmoid_thr= 0.5
-	learning_rate= args.learning_rate
+	learning_rate= args.lr
+	min_lr= args.min_lr
 	lr_scheduler= args.lr_scheduler
 	nepochs= args.nepochs
 	batch_size= args.batch_size
@@ -215,6 +220,7 @@ def main():
 		label2id=label2id,
 		num_labels=num_labels
 	)
+	model= model.to(device)
 	
 	logger.info("Creating processor ...")
 	processor = AutoImageProcessor.from_pretrained(modelname)
@@ -424,6 +430,7 @@ def main():
 		num_train_epochs=nepochs,
 		#lr_scheduler_type=scheduler,
 		learning_rate=learning_rate,
+		#warmup_ratio=warmup_ratio,
 		#warmup_steps=num_warmup_steps,
 		per_device_train_batch_size=batch_size,
 		per_device_eval_batch_size=batch_size,
@@ -447,16 +454,30 @@ def main():
 	)
 	
 	# - Set optimizer
-	#optimizer = AdamW(model.parameters(), lr=learning_rate)
-	training_opts.set_optimizer(name="adamw_torch", learning_rate=learning_rate)
+	optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
+	#training_opts.set_optimizer(name="adamw_torch", learning_rate=learning_rate)
 	
 	# - Set scheduler
-	training_opts.set_lr_scheduler(
-		name=lr_scheduler, 
-		num_epochs=nepochs,
-		warmup_ratio=warmup_ratio
-	)
+	#training_opts.set_lr_scheduler(
+	#	name=lr_scheduler, 
+	#	num_epochs=nepochs,
+	#	warmup_ratio=warmup_ratio
+	#)
 	
+	training_steps = (nsamples / batch_size) * nepochs
+	warmup_steps = math.ceil(training_steps * warmup_ratio)
+	logger.info("Train pars: nsamples=%d, epochs=%d, steps=%d, warmup_steps=%d" % (nsamples, nepochs, training_steps, warmup_steps))
+	
+	if lr_scheduler=="constant":
+		scheduler= transformers.get_constant_schedule(optimizer)
+	elif lr_scheduler=="linear":
+		scheduler= transformers.get_linear_schedule_with_warmup(optimizer, num_warmup_steps=warmup_steps, num_training_steps=training_steps)
+	elif lr_scheduler=="cosine":
+		scheduler= transformers.get_cosine_schedule_with_warmup(optimizer, num_warmup_steps=warmup_steps, num_training_steps=training_steps)
+	elif lr_scheduler=="cosine_with_min_lr":
+		scheduler= transformers.get_cosine_with_min_lr_schedule_with_warmup(optimizer, num_warmup_steps=warmup_steps, num_training_steps=training_steps, min_lr=min_lr)
+	else:
+		scheduler= transformers.get_constant_schedule(optimizer)	
 	
 	##scheduler= transformers.get_constant_schedule(optimizer)
 	#training_opts.set_lr_scheduler(name="linear", num_epochs=nepochs)
@@ -499,6 +520,7 @@ def main():
 				compute_metrics=compute_metrics_custom,
 				tokenizer=processor,
 				data_collator=collate_fn,
+				optimizers=(optimizer, scheduler)
 			)
 		else:
 			trainer= SingleLabelClassTrainer(
@@ -508,6 +530,7 @@ def main():
 				compute_metrics=compute_metrics_custom,
 				tokenizer=processor,
 				data_collator=collate_fn,
+				optimizers=(optimizer, scheduler)
 			)
 	else:
 		logger.info("Initialize model trainer for training task ...")
@@ -521,6 +544,7 @@ def main():
 				compute_metrics=compute_metrics_custom,
 				tokenizer=processor,
 				data_collator=collate_fn,
+				optimizers=(optimizer, scheduler)
 			)
 		else:
 			trainer= SingleLabelClassTrainer(
@@ -532,6 +556,7 @@ def main():
 				compute_metrics=compute_metrics_custom,
 				tokenizer=processor,
 				data_collator=collate_fn,
+				optimizers=(optimizer, scheduler)
 			)
 			
 			
