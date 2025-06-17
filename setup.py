@@ -35,7 +35,7 @@ reqs.append('transformers')
 reqs.append('accelerate')
 reqs.append('evaluate')
 reqs.append('matplotlib')
-
+reqs.append('wandb')
 
 ##data_dir = 'data'
 

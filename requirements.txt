@@ -10,3 +10,4 @@ transformers
 accelerate
 evaluate
 matplotlib
+wandb
