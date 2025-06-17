@@ -52,9 +52,18 @@ from sclassifier_vit import logger
 ##    DATA UTILS
 ##########################
 def read_datalist(filename, key="data"):
+	""" Read data json file """
   f= open(filename, "r")
   datalist= json.load(f)[key]
   return datalist
+  
+def extract_layer_id(name: str) -> int:
+	""" Extract layer id from vision encoder layer name """ 
+	match = re.search(r'\.layers\.(\d+)\.', name)
+	if not match:
+		logger.warning(f"No '.layers.<id>.' pattern found in: {name}")
+		return -1
+	return int(match.group(1))
   
 ##########################
 ##   IMAGE PROC UTILS
