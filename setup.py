@@ -49,7 +49,7 @@ setup(
 	long_description=read('README.md'),
 	long_description_content_type='text/markdown',
 	download_url="https://github.com/SKA-INAF/sclassifier-vit/archive/refs/tags/v1.0.0.tar.gz",
-	packages=['sclassifier-vit'],
+	packages=['sclassifier_vit'],
 	install_requires=reqs,
 	scripts=['scripts/run.py'],
 	classifiers=[
