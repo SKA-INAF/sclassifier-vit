@@ -275,7 +275,7 @@ def main():
 			T.Resize(size, interpolation=T.InterpolationMode.BICUBIC),
 			FlippingTransform(),
 			Rotate90Transform(),
-			T.ToTensor(),
+			#T.ToTensor(),
 			T.Normalize(mean=mean, std=std),
 		]
 	)
@@ -286,7 +286,7 @@ def main():
 			FlippingTransform(),
 			Rotate90Transform(),
 			T.RandomApply([blur_aug], p=0.1),
-			T.ToTensor(),
+			#T.ToTensor(),
 			T.Normalize(mean=mean, std=std),
 		]
 	)
@@ -301,7 +301,7 @@ def main():
 	transform_val = T.Compose(
 		[
 			T.Resize(size, interpolation=T.InterpolationMode.BICUBIC),
-			T.ToTensor(),
+			#T.ToTensor(),
 			T.Normalize(mean=mean, std=std),
 		]
 	)
@@ -309,7 +309,7 @@ def main():
 	transform_test = T.Compose(
 		[
 			T.Resize(size, interpolation=T.InterpolationMode.BICUBIC),
-			T.ToTensor(),
+			#T.ToTensor(),
 			T.Normalize(mean=mean, std=std),
 		]
 	)
