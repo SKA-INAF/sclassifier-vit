@@ -68,7 +68,7 @@ class MultiLabelClassTrainer(transformers.Trainer):
 			compute_metrics=compute_metrics,
 			callbacks=callbacks,
 			optimizers=optimizers,
-			preprocess_logits_for_metrics
+			preprocess_logits_for_metrics=preprocess_logits_for_metrics
 		)
 		self.num_labels= num_labels
 	
@@ -207,7 +207,7 @@ class SingleLabelClassTrainer(transformers.Trainer):
 			compute_metrics=compute_metrics,
 			callbacks=callbacks,
 			optimizers=optimizers,
-			preprocess_logits_for_metrics
+			preprocess_logits_for_metrics=preprocess_logits_for_metrics
 		)
 		self.num_labels= num_labels
 	
