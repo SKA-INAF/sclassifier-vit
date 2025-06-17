@@ -163,13 +163,13 @@ class AstroImageDataset(Dataset):
 				resize=self.resize, resize_size=self.resize_size, 
 				apply_zscale=self.apply_zscale, contrast=self.zscale_contrast, 
 				set_nans_to_min=False,
-				to_uint8=False, 
+				to_uint8=True, 
 				verbose=False
 			)
 			
 		# - Convert PIL image to tensor if needed
 		if isinstance(img, PIL.Image.Image):
-			img = self.pil2tensor(img)
+			img = self.pil2tensor(img).float()
 
 		# - Replace NaN or Inf with zeros
 		img[~torch.isfinite(img)] = 0
