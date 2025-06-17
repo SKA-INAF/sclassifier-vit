@@ -9,6 +9,7 @@ from __future__ import print_function
 import sys
 import os
 import random
+import numpy as np
 
 # - TORCH
 import torch
