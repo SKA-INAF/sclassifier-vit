@@ -159,15 +159,15 @@ class AstroImageDataset(Dataset):
 			)
 			
 		# - Convert PIL image to tensor if needed
-    if isinstance(img, PIL.Image.Image):
-      img = self.pil2tensor(img)
+		if isinstance(img, PIL.Image.Image):
+			img = self.pil2tensor(img)
 
-    # - Replace NaN or Inf with zeros
-    img[~torch.isfinite(img)] = 0
+		# - Replace NaN or Inf with zeros
+		img[~torch.isfinite(img)] = 0
 
-    # - Apply transforms
-    if self.transform:
-      img = self.transform(img)
+		# - Apply transforms
+		if self.transform:
+			img = self.transform(img)
 		
 		return img
 		
