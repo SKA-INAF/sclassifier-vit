@@ -45,6 +45,15 @@ def get_multi_label_target_maps(schema="morph_tags", skip_first_class=False):
 			
 		if skip_first_class:
 			id2label= {
+				0: "RADIO-GALAXY",
+				1: "EXTENDED",
+				2: "DIFFUSE",
+				3: "DIFFUSE-LARGE",
+				4: "ARTEFACT"
+			}
+			
+		else:
+			id2label= {
 				0: "BACKGROUND",
 				1: "RADIO-GALAXY",
 				2: "EXTENDED",
@@ -52,15 +61,6 @@ def get_multi_label_target_maps(schema="morph_tags", skip_first_class=False):
 				4: "DIFFUSE-LARGE",
 				5: "ARTEFACT"
 			}	
-			
-		else:
-			id2label= {
-				0: "RADIO-GALAXY",
-				1: "EXTENDED",
-				2: "DIFFUSE",
-				3: "DIFFUSE-LARGE",
-				4: "ARTEFACT"
-			}
 			
 		
 	# - Compute reverse dict
@@ -127,7 +127,7 @@ class AstroImageDataset(Dataset):
 		apply_zscale=False,
 		zscale_contrast=0.25,
 		resize=False,
-		resize_size=224
+		resize_size=224,
 	):
 		self.filename= filename
 		self.datalist= read_datalist(filename)
@@ -208,7 +208,7 @@ class MultiLabelDataset(AstroImageDataset):
 		id2target=None,
 		#target2label=None,
 		#label_schema="radioimg_morph_tags",
-		#skip_first_class=False
+		skip_first_class=False
 	):
 		super().__init__(
 			filename, 
@@ -217,7 +217,7 @@ class MultiLabelDataset(AstroImageDataset):
 			apply_zscale, zscale_contrast,
 			resize, resize_size
 		)
-		#self.skip_first_class= skip_first_class
+		self.skip_first_class= skip_first_class
 		#self.label_schema= label_schema
 		
 		#if nclasses is None or id2target is None or target2label is None:
@@ -271,8 +271,8 @@ class MultiLabelDataset(AstroImageDataset):
 		
 		# - Get class id (hot encoding)
 		class_ids_hotenc= self.mlb.fit_transform([class_ids])
-		#if self.skip_first_class:
-		#	class_ids_hotenc= class_ids_hotenc[:, 1:self.nclasses]
+		if self.skip_first_class:
+			class_ids_hotenc= class_ids_hotenc[:, 1:self.nclasses]
 		
 		class_ids_hotenc = [j for sub in class_ids_hotenc for j in sub]
 		class_ids_hotenc= torch.from_numpy(np.array(class_ids_hotenc).astype(np.float32))
