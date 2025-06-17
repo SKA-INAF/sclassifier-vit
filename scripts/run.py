@@ -21,6 +21,7 @@ from sklearn.metrics import hamming_loss
 
 # - TORCH
 import torch
+from torch.optim import AdamW
 import torchvision.transforms.functional as TF
 import torchvision.transforms as T
 
@@ -37,7 +38,6 @@ from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 from transformers.trainer_utils import EvalPrediction
 from transformers.trainer_callback import TrainerCallback
 from transformers import EvalPrediction 
-from transformers import AdamW   
 import evaluate
 
 # - SCLASSIFIER-VIT
