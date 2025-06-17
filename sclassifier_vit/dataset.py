@@ -12,6 +12,7 @@ import random
 import numpy as np
 
 # - PIL
+import PIL
 from PIL import Image
 
 # - SKLEARN
