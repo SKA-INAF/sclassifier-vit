@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Un
 
 # - TORCH
 import torch
+from torch import nn
 import torchvision.transforms.functional as TF
 import torchvision.transforms as T
 
