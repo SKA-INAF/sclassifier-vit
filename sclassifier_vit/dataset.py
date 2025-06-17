@@ -11,16 +11,17 @@ import os
 import random
 import numpy as np
 
+# - SKLEARN
+from sklearn.preprocessing import MultiLabelBinarizer
+
 # - TORCH
 import torch
 from torch.utils.data import Dataset
 import torchvision.transforms.functional as TF
 import torchvision.transforms as T
 
-
 # - SCLASSIFIER-VIT
 from sclassifier_vit.utils import *
-
 
 ######################################
 ###      CLASS LABEL SCHEMA
