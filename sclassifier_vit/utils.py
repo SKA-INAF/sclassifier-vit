@@ -53,9 +53,9 @@ from sclassifier_vit import logger
 ##########################
 def read_datalist(filename, key="data"):
 	""" Read data json file """
-  f= open(filename, "r")
-  datalist= json.load(f)[key]
-  return datalist
+	f= open(filename, "r")
+	datalist= json.load(f)[key]
+	return datalist
   
 def extract_layer_id(name: str) -> int:
 	""" Extract layer id from vision encoder layer name """ 
