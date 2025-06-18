@@ -459,7 +459,7 @@ def read_img(filename, nchans=1, norm_range=(0.,1.), resize=False, resize_size=2
     verbose=verbose
   )
 
-  return data_transf.as_type(float)
+  return data_transf.astype(float)
 
 def load_img_as_npy_float(filename, add_chan_axis=True, add_batch_axis=True, resize=False, resize_size=224, apply_zscale=True, contrast=0.25, set_nans_to_min=False, verbose=False):
   """ Return numpy float image array norm to [0,1] """
