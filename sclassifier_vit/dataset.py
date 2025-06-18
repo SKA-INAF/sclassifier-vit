@@ -156,6 +156,7 @@ class AstroImageDataset(Dataset):
 		self.zscale_contrast= zscale_contrast
 		self.resize= resize
 		self.resize_size= resize_size
+		self.verbose= verbose
 		
 		self.pil2tensor = T.Compose([T.PILToTensor()])
 		
@@ -200,7 +201,7 @@ class AstroImageDataset(Dataset):
 				resize=self.resize, resize_size=self.resize_size, 
 				apply_zscale=self.apply_zscale, contrast=self.zscale_contrast, 
 				set_nans_to_min=False, 
-				verbose=verbose
+				verbose=self.verbose
 			)
 		else:
 			img= load_img_as_npy_rgb_float(
@@ -210,7 +211,7 @@ class AstroImageDataset(Dataset):
 				resize=self.resize, resize_size=self.resize_size, 
 				apply_zscale=self.apply_zscale, contrast=self.zscale_contrast, 
 				set_nans_to_min=False, 
-				verbose=verbose
+				verbose=self.verbose
 			)
 			
 		#if verbose:
