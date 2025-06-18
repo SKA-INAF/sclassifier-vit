@@ -295,12 +295,12 @@ class MultiLabelDataset(AstroImageDataset):
 		class_ids_hotenc = [j for sub in class_ids_hotenc for j in sub]
 		class_ids_hotenc= torch.from_numpy(np.array(class_ids_hotenc).astype(np.float32))
 		
-		print("ids")
-		print(ids)
-		print("class_ids")
-		print(class_ids)
-		print("class_ids_hotenc")
-		print(class_ids_hotenc)
+		#print("ids")
+		#print(ids)
+		#print("class_ids")
+		#print(class_ids)
+		#print("class_ids_hotenc")
+		#print(class_ids_hotenc)
 
 		return image_tensor, class_ids_hotenc		
 		
