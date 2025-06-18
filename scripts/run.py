@@ -494,9 +494,10 @@ def main():
 	num_update_steps_per_epoch = max(num_update_steps_per_epoch, 1)
 	max_steps = math.ceil(nepochs * num_update_steps_per_epoch)
 	
-	training_steps = (nsamples / batch_size) * nepochs
+	#training_steps = (nsamples / batch_size) * nepochs
+	training_steps= max_steps
 	warmup_steps = math.ceil(training_steps * warmup_ratio)
-	logger.info("Train pars: nsamples=%d, epochs=%d, batch_size=%d, gradacc=%d, tot_batch_size=%d, n_batches=%d, num_update_steps_per_epoch=%d, steps=%d, warmup_steps=%d" % (nsamples, nepochs, batch_size, gradient_accumulation_steps, tot_batch_size, n_batches, num_update_steps_per_epoch, training_steps, warmup_steps))
+	logger.info("Train pars: nsamples=%d, epochs=%d, batch_size=%d, gradacc=%d, tot_batch_size=%d, n_batches=%d, num_update_steps_per_epoch=%d, max_steps=%d, steps=%d, warmup_steps=%d" % (nsamples, nepochs, batch_size, gradient_accumulation_steps, tot_batch_size, n_batches, num_update_steps_per_epoch, max_steps, training_steps, warmup_steps))
 	
 	if lr_scheduler=="constant":
 		scheduler= transformers.get_constant_schedule(optimizer)
