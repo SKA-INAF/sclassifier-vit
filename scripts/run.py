@@ -241,6 +241,10 @@ def main():
 	)
 	model= model.to(device)
 	
+	print("*** MODEL ***")
+	print(model)
+	print("")
+	
 	logger.info("Creating processor ...")
 	processor = AutoImageProcessor.from_pretrained(modelname)
  
