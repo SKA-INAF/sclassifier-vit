@@ -166,28 +166,66 @@ class AstroImageDataset(Dataset):
 		image_path= item["filepaths"][0]
 		image_ext= os.path.splitext(image_path)[1]
 		
-		# - Read image (FITS/natural image supported) and then convert to PIL either as 1D or RGB image
+		# - Read image (FITS/natural image supported) and then convert to PIL either as 1D or 3-chan image, normalized to [0,1]
+		#if self.load_as_gray:
+		#	img= load_img_as_pil_float(
+		#		image_path, 
+		#		resize=self.resize, resize_size=self.resize_size, 
+		#		apply_zscale=self.apply_zscale, contrast=self.zscale_contrast, 
+		#		set_nans_to_min=False, 
+		#		verbose=False
+		#	)
+		#else:
+		#	img= load_img_as_pil_rgb_float(
+		#		image_path, 
+		#		resize=self.resize, resize_size=self.resize_size, 
+		#		apply_zscale=self.apply_zscale, contrast=self.zscale_contrast, 
+		#		set_nans_to_min=False,
+		#		to_uint8=True, 
+		#		verbose=False
+		#	)
+			
+		# - Convert PIL image to tensor if needed
+		#if isinstance(img, PIL.Image.Image):
+		#	img = self.pil2tensor(img).float()
+
+
+		# - Read image (FITS/natural image supported) and then convert to numpy either as 1D or 3-chan image, normalized to [0,1]
 		if self.load_as_gray:
-			img= load_img_as_pil_float(
+			img= load_img_as_npy_float(
 				image_path, 
+				add_chan_axis=True,
+				add_batch_axis=False,
 				resize=self.resize, resize_size=self.resize_size, 
 				apply_zscale=self.apply_zscale, contrast=self.zscale_contrast, 
 				set_nans_to_min=False, 
 				verbose=False
 			)
 		else:
-			img= load_img_as_pil_rgb(
+			img= load_img_as_npy_rgb_float(
 				image_path, 
+				add_chan_axis=True,
+				add_batch_axis=False,
 				resize=self.resize, resize_size=self.resize_size, 
 				apply_zscale=self.apply_zscale, contrast=self.zscale_contrast, 
-				set_nans_to_min=False,
-				to_uint8=True, 
+				set_nans_to_min=False, 
 				verbose=False
 			)
 			
-		# - Convert PIL image to tensor if needed
-		if isinstance(img, PIL.Image.Image):
-			img = self.pil2tensor(img).float()
+		print("npy img")
+		print(img.dtype)
+		print(img.shape)
+		print(img.min())
+		print(img.max())
+			
+		# - Convert numpy image to tensor	
+		img = torch.from_numpy(img)
+
+		print("tensor img")
+		print(img.dtype)
+		print(img.shape)
+		print(img.min())
+		print(img.max())
 
 		# - Replace NaN or Inf with zeros
 		img[~torch.isfinite(img)] = 0

@@ -303,6 +303,7 @@ def get_clipped_data(data, sigma_low=5, sigma_up=30):
 
 	return data_clipped
 	
+	
 def get_zscaled_data(data, contrast=0.25):
 	""" Apply sigma clipping to input data and return transformed data """
 
@@ -458,7 +459,7 @@ def read_img(filename, nchans=1, norm_range=(0.,1.), resize=False, resize_size=2
     verbose=verbose
   )
 
-  return data_transf
+  return data_transf.as_type(float)
 
 def load_img_as_npy_float(filename, add_chan_axis=True, add_batch_axis=True, resize=False, resize_size=224, apply_zscale=True, contrast=0.25, set_nans_to_min=False, verbose=False):
   """ Return numpy float image array norm to [0,1] """
@@ -488,6 +489,32 @@ def load_img_as_npy_float(filename, add_chan_axis=True, add_batch_axis=True, res
     if add_batch_axis:
       data_reshaped= np.stack((data,), axis=0)
       data= data_reshaped
+
+  return data.as_type(float)
+  
+  
+def load_img_as_npy_rgb_float(filename, add_chan_axis=True, add_batch_axis=True, resize=False, resize_size=224, apply_zscale=True, contrast=0.25, set_nans_to_min=False, verbose=False):
+  """ Return numpy float image 3-chan array norm to [0,1] """
+
+  # - Read FITS from file and get transformed npy array
+  data= read_img(
+    filename,
+    nchans=3,
+    norm_range=(0.,1.),
+    resize=resize, resize_size=resize_size,
+    apply_zscale=apply_zscale, contrast=contrast,
+    to_uint8=False,
+    set_nans_to_min=set_nans_to_min,
+    verbose=verbose
+  )
+  if data is None:
+    logger.warn("Read image is None!")
+    return None
+
+  # - Add batch axis if requested
+  if add_batch_axis:
+    data_reshaped= np.stack((data,), axis=0)
+    data= data_reshaped
 
   return data
 
