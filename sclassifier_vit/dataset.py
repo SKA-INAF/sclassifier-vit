@@ -146,6 +146,7 @@ class AstroImageDataset(Dataset):
 		zscale_contrast=0.25,
 		resize=False,
 		resize_size=224,
+		verbose=False
 	):
 		self.filename= filename
 		self.datalist= read_datalist(filename)
@@ -199,7 +200,7 @@ class AstroImageDataset(Dataset):
 				resize=self.resize, resize_size=self.resize_size, 
 				apply_zscale=self.apply_zscale, contrast=self.zscale_contrast, 
 				set_nans_to_min=False, 
-				verbose=False
+				verbose=verbose
 			)
 		else:
 			img= load_img_as_npy_rgb_float(
@@ -209,23 +210,25 @@ class AstroImageDataset(Dataset):
 				resize=self.resize, resize_size=self.resize_size, 
 				apply_zscale=self.apply_zscale, contrast=self.zscale_contrast, 
 				set_nans_to_min=False, 
-				verbose=False
+				verbose=verbose
 			)
 			
-		print("npy img")
-		print(img.dtype)
-		print(img.shape)
-		print(img.min())
-		print(img.max())
+		#if verbose:
+		#	print("npy img")
+		#	print(img.dtype)
+		#	print(img.shape)
+		#	print(img.min())
+		#	print(img.max())
 			
 		# - Convert numpy image to tensor	
 		img = torch.from_numpy(img.transpose((2, 0, 1))).contiguous()
 
-		print("tensor img")
-		print(img.dtype)
-		print(img.shape)
-		print(img.min())
-		print(img.max())
+		#if verbose:
+		#	print("tensor img")
+		#	print(img.dtype)
+		#	print(img.shape)
+		#	print(img.min())
+		#	print(img.max())
 
 		# - Replace NaN or Inf with zeros
 		img[~torch.isfinite(img)] = 0
@@ -264,14 +267,16 @@ class MultiLabelDataset(AstroImageDataset):
 		id2target=None,
 		#target2label=None,
 		#label_schema="radioimg_morph_tags",
-		skip_first_class=False
+		skip_first_class=False,
+		verbose=False
 	):
 		super().__init__(
 			filename, 
 			transform,
 			load_as_gray,
 			apply_zscale, zscale_contrast,
-			resize, resize_size
+			resize, resize_size,
+			verbose
 		)
 		self.skip_first_class= skip_first_class
 		#self.label_schema= label_schema
@@ -360,13 +365,15 @@ class SingleLabelDataset(AstroImageDataset):
 			id2target=None,
 			#target2label=None,
 			#label_schema="radioimg_morph_tags"
+			verbose=False
 		):
 		super().__init__(
 			filename, 
 			transform,
 			load_as_gray,
 			apply_zscale, zscale_contrast,
-			resize, resize_size
+			resize, resize_size,
+			verbose
 		)	
 		
 		#self.label_schema= label_schema
