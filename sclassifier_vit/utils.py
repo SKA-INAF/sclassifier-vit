@@ -490,7 +490,7 @@ def load_img_as_npy_float(filename, add_chan_axis=True, add_batch_axis=True, res
       data_reshaped= np.stack((data,), axis=0)
       data= data_reshaped
 
-  return data.as_type(float)
+  return data.astype(float)
   
   
 def load_img_as_npy_rgb_float(filename, add_chan_axis=True, add_batch_axis=True, resize=False, resize_size=224, apply_zscale=True, contrast=0.25, set_nans_to_min=False, verbose=False):
