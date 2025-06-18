@@ -96,6 +96,7 @@ def get_args():
 	parser.set_defaults(inference=False)
 	parser.add_argument('-modelfile', '--modelfile', dest='modelfile', required=False, type=str, default="google/siglip-so400m-patch14-384", action='store',help='Model pretrained file name or weight path to be loaded {google/siglip-large-patch16-256, google/siglip-base-patch16-256, google/siglip-base-patch16-256-i18n, google/siglip-so400m-patch14-384, google/siglip-base-patch16-224}')
 	
+	parser.add_argument('-ngpu', '--ngpu', dest='ngpu', required=False, type=int, default=1, action='store',help='Number of gpus used for the run. Needed to compute the global number of training steps (default=1)')	
 	parser.add_argument('-nepochs', '--nepochs', dest='nepochs', required=False, type=int, default=1, action='store',help='Number of epochs used in network training (default=100)')	
 	#parser.add_argument('-optimizer', '--optimizer', dest='optimizer', required=False, type=str, default='adamw', action='store',help='Optimizer used (default=rmsprop)')
 	parser.add_argument('-lr_scheduler', '--lr_scheduler', dest='lr_scheduler', required=False, type=str, default='constant', action='store',help='Learning rate scheduler used {constant, linear, cosine, cosine_with_min_lr} (default=constant)')
@@ -103,6 +104,10 @@ def get_args():
 	parser.add_argument('-min_lr', '--min_lr', dest='min_lr', required=False, type=float, default=1e-6, action='store',help='Learning rate min used in cosine_with_min_lr (default=1.e-6)')
 	parser.add_argument('-warmup_ratio', '--warmup_ratio', dest='warmup_ratio', required=False, type=float, default=0.2, action='store',help='Warmup ratio par (default=0.2)')
 	parser.add_argument('-batch_size', '--batch_size', dest='batch_size', required=False, type=int, default=8, action='store',help='Batch size used in training (default=8)')
+	
+	parser.add_argument('--drop_last', dest='drop_last', action='store_true',help='Drop last incomplete batch (default=false)')	
+	parser.set_defaults(drop_last=False)
+	
 	
 	#parser.add_argument('--use_warmup_lr_schedule', dest='use_warmup_lr_schedule', action='store_true',help='Use linear warmup+cos decay schedule to update learning rate (default=false)')	
 	#parser.set_defaults(use_warmup_lr_schedule=False)
@@ -197,6 +202,7 @@ def main():
 	gradient_accumulation_steps= args.gradient_accumulation_steps
 	freeze_backbone= args.freeze_backbone
 	max_freeze_layer_id= args.max_freeze_layer_id
+	drop_last= args.drop_last
 	
 	# - Set config options
 	label_schema= args.label_schema
@@ -443,11 +449,12 @@ def main():
 		num_train_epochs=nepochs,
 		#lr_scheduler_type=scheduler,
 		learning_rate=learning_rate,
-		#warmup_ratio=warmup_ratio,
+		warmup_ratio=warmup_ratio,
 		#warmup_steps=num_warmup_steps,
 		per_device_train_batch_size=batch_size,
 		per_device_eval_batch_size=batch_size,
 		gradient_accumulation_steps=gradient_accumulation_steps,
+		dataloader_drop_last= drop_last,
 		eval_strategy="steps" if run_eval_on_step else "epoch",
 		eval_on_start=run_eval_on_start,
 		eval_steps=logging_steps,
@@ -477,9 +484,19 @@ def main():
 	#	warmup_ratio=warmup_ratio
 	#)
 	
+	tot_batch_size= args.ngpu * batch_size * gradient_accumulation_steps
+	if drop_last:
+		n_batches = nsamples // batch_size
+	else:
+		n_batches= math.ceil(nsamples / batch_size)
+                    
+	num_update_steps_per_epoch = n_batches // gradient_accumulation_steps 
+	num_update_steps_per_epoch = max(num_update_steps_per_epoch, 1)
+	max_steps = math.ceil(nepochs * num_update_steps_per_epoch)
+	
 	training_steps = (nsamples / batch_size) * nepochs
 	warmup_steps = math.ceil(training_steps * warmup_ratio)
-	logger.info("Train pars: nsamples=%d, epochs=%d, steps=%d, warmup_steps=%d" % (nsamples, nepochs, training_steps, warmup_steps))
+	logger.info("Train pars: nsamples=%d, epochs=%d, batch_size=%d, gradacc=%d, tot_batch_size=%d, n_batches=%d, num_update_steps_per_epoch=%d, steps=%d, warmup_steps=%d" % (nsamples, nepochs, batch_size, gradient_accumulation_steps, tot_batch_size, n_batches, num_update_steps_per_epoch, training_steps, warmup_steps))
 	
 	if lr_scheduler=="constant":
 		scheduler= transformers.get_constant_schedule(optimizer)
