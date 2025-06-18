@@ -90,10 +90,10 @@ def get_args():
 	parser.add_argument('-resize_size', '--resize_size', dest='resize_size', required=False, type=int, default=224, action='store', help='Resize size in pixels used if --resize option is enabled (default=224)')	
 	
 	# - Model options
-	parser.add_argument('--predict', dest='predict', action='store_true',help='Predict model on input data (default=false)')	
+	parser.add_argument('--predict', dest='predict', action='store_true', help='Predict model on input data (default=false)')	
 	parser.set_defaults(predict=False)
-	parser.add_argument('--inference', dest='inference', action='store_true',help='Run model inference on input data (default=false)')	
-	parser.set_defaults(inference=False)
+	parser.add_argument('--test', dest='test', action='store_true', help='Run model test on input data (default=false)')	
+	parser.set_defaults(test=False)
 	parser.add_argument('-modelfile', '--modelfile', dest='modelfile', required=False, type=str, default="google/siglip-so400m-patch14-384", action='store',help='Model pretrained file name or weight path to be loaded {google/siglip-large-patch16-256, google/siglip-base-patch16-256, google/siglip-base-patch16-256-i18n, google/siglip-so400m-patch14-384, google/siglip-base-patch16-224}')
 	
 	parser.add_argument('-ngpu', '--ngpu', dest='ngpu', required=False, type=int, default=1, action='store',help='Number of gpus used for the run. Needed to compute the global number of training steps (default=1)')	
@@ -141,7 +141,7 @@ def get_args():
 	parser.add_argument('--save_model_every_epoch', dest='save_model_every_epoch', action='store_true', help='Save model every epoch (default=false)')	
 	parser.set_defaults(save_model_every_epoch=False)
 	parser.add_argument('-max_checkpoints', '--max_checkpoints', dest='max_checkpoints', required=False, type=int, default=1, action='store',help='Max number of saved checkpoints (default=1)')
-	parser.add_argument('-outfile_inference','--outfile_inference', dest='outfile_inference', required=False, default="inference_results.json", type=str, help='Output file with saved inference results') 
+	parser.add_argument('-outfile','--outfile', dest='outfile', required=False, default="classifier_results.json", type=str, help='Output file with saved inference results') 
 	
 	args = parser.parse_args()	
 
@@ -173,14 +173,14 @@ def main():
 	device = torch.device(device_choice if torch.cuda.is_available() else "cpu")
 	
 	multilabel= args.multilabel
-	predict= args.predict
-	inference= args.inference
+	run_predict= args.predict
+	run_test= args.test
 	run_eval_on_start= args.run_eval_on_start
 	run_eval_on_step= args.run_eval_on_step
 	logging_steps= args.logging_steps
 	run_name= args.runname
 	
-	outfile_inference= args.outfile_inference
+	outfile= args.outfile
 	
 	# - Set model name
 	modelname= args.modelfile 
@@ -347,9 +347,9 @@ def main():
 	nsamples_cv= 0
 	
 	# - TEST SET
-	if predict or inference:
+	if run_predict or run_test:
 		if multilabel:
-			logger.info("Create dataset for prediction/inference (multi-label classification) ...")
+			logger.info("Create dataset for prediction/test (multi-label classification) ...")
 			dataset= MultiLabelDataset(
 				filename=datalist,
 				transform=transform_test,
@@ -360,7 +360,7 @@ def main():
 				id2target=id2target
 			)
 		else:
-			logger.info("Create dataset for prediction/inference (single-label classification) ...")
+			logger.info("Create dataset for prediction/test (single-label classification) ...")
 			dataset= SingleLabelDataset(
 				filename=datalist,
 				transform=transform_test,
@@ -447,9 +447,9 @@ def main():
 	logger.info("Set model options ...")
 	training_opts= transformers.TrainingArguments(
 		output_dir=output_dir,
-		do_train=True if not predict else False,
-		do_eval=True if not predict and dataset_cv is not None else False,
-		do_predict=True if predict else False,
+		do_train=True if not run_test else False,
+		do_eval=True if not run_test and dataset_cv is not None else False,
+		do_predict=True if run_test else False,
 		num_train_epochs=nepochs,
 		#lr_scheduler_type=scheduler,
 		learning_rate=learning_rate,
@@ -494,13 +494,10 @@ def main():
 	else:
 		n_batches= math.ceil(nsamples / batch_size)
                     
-	#num_update_steps_per_epoch = n_batches // gradient_accumulation_steps 
-	#num_update_steps_per_epoch = max(num_update_steps_per_epoch, 1)
 	num_update_steps_per_epoch = max(n_batches // gradient_accumulation_steps + int(n_batches % gradient_accumulation_steps > 0), 1)
 	
 	max_steps = math.ceil(nepochs * num_update_steps_per_epoch)
 	
-	#training_steps = (nsamples / batch_size) * nepochs
 	training_steps= max_steps
 	warmup_steps = math.ceil(training_steps * warmup_ratio)
 	logger.info("Train pars: nsamples=%d, epochs=%d, batch_size=%d, gradacc=%d, tot_batch_size=%d, n_batches=%d, num_update_steps_per_epoch=%d, max_steps=%d, steps=%d, warmup_steps=%d" % (nsamples, nepochs, batch_size, gradient_accumulation_steps, tot_batch_size, n_batches, num_update_steps_per_epoch, max_steps, training_steps, warmup_steps))
@@ -547,7 +544,7 @@ def main():
 		compute_metrics_custom= build_single_label_metrics(label_names)
 		
 	# - Initialize trainer
-	if predict:
+	if run_test:
 		logger.info("Initialize model trainer for prediction task ...")
 		if multilabel:
 			trainer= MultiLabelClassTrainer(
@@ -598,10 +595,10 @@ def main():
 			
 			
 	#######################################
-	##     RUN TRAIN/PREDICT
+	##     RUN TEST
 	#######################################		
 	# - Run predict on test set
-	if predict:
+	if run_test:
 		logger.info("Predict model on input data %s ..." % (datalist))
 		predictions, labels, metrics= trainer.predict(dataset, metric_key_prefix="predict")
 		
@@ -619,8 +616,11 @@ def main():
 		trainer.log_metrics("predict", metrics)
 		trainer.save_metrics("predict", metrics)	
 	
-	# - Run inference
-	elif inference:
+	################################
+	##    RUN PREDICT
+	################################
+	# - Run test
+	elif run_predict:
 		logger.info("Running model inference on input data %s ..." % (datalist))
 		device = torch.device(device_choice if torch.cuda.is_available() else "cpu")
 		
@@ -696,10 +696,13 @@ def main():
 			inference_results["data"].append(image_info)
 			
 		# - Save json file
-		logger.info("Saving inference results with prediction info to file %s ..." % (outfile_inference))
-		with open(outfile_inference, 'w') as fp:
+		logger.info("Saving inference results with prediction info to file %s ..." % (outfile))
+		with open(outfile, 'w') as fp:
 			json.dump(inference_results, fp)
 	
+	################################
+	##    TRAIN
+	################################
 	# - Run model train
 	else:
 		logger.info("Run model training ...")
