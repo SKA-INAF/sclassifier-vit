@@ -34,16 +34,25 @@ def get_multi_label_target_maps(schema="morph_tags", skip_first_class=False):
 	""" Return multi-label classifier target maps """
 
 	if schema=="morph_tags":
-		id2target= {
-			0: 0, # background
-			1: 1, # radio-galaxy
-			2: 2, # extended
-			3: 3, # diffuse
-			4: 4, # diffuse-large
-			5: 5, # artefact
-		}
+		#id2target= {
+		#	0: 0, # background
+		#	1: 1, # radio-galaxy
+		#	2: 2, # extended
+		#	3: 3, # diffuse
+		#	4: 4, # diffuse-large
+		#	5: 5, # artefact
+		#}
 			
 		if skip_first_class:
+			id2target= {
+				0: -1, # background
+				1: 0, # radio-galaxy
+				2: 1, # extended
+				3: 2, # diffuse
+				4: 3, # diffuse-large
+				5: 4, # artefact
+			}
+			
 			id2label= {
 				0: "RADIO-GALAXY",
 				1: "EXTENDED",
@@ -53,6 +62,15 @@ def get_multi_label_target_maps(schema="morph_tags", skip_first_class=False):
 			}
 			
 		else:
+			id2target= {
+				0: 0, # background
+				1: 1, # radio-galaxy
+				2: 2, # extended
+				3: 3, # diffuse
+				4: 4, # diffuse-large
+				5: 5, # artefact
+			}
+		
 			id2label= {
 				0: "BACKGROUND",
 				1: "RADIO-GALAXY",
@@ -271,11 +289,18 @@ class MultiLabelDataset(AstroImageDataset):
 		
 		# - Get class id (hot encoding)
 		class_ids_hotenc= self.mlb.fit_transform([class_ids])
-		if self.skip_first_class:
-			class_ids_hotenc= class_ids_hotenc[:, 1:self.nclasses]
+		#if self.skip_first_class:
+		#	class_ids_hotenc= class_ids_hotenc[:, 1:self.nclasses]
 		
 		class_ids_hotenc = [j for sub in class_ids_hotenc for j in sub]
 		class_ids_hotenc= torch.from_numpy(np.array(class_ids_hotenc).astype(np.float32))
+		
+		print("ids")
+		print(ids)
+		print("class_ids")
+		print(class_ids)
+		print("class_ids_hotenc")
+		print(class_ids_hotenc)
 
 		return image_tensor, class_ids_hotenc		
 		

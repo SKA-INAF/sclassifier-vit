@@ -205,8 +205,9 @@ def main():
 	else:
 		id2label, label2id, id2target= get_single_label_target_maps(label_schema)
 		
-	nclasses= len(id2target)   # - This counts all classes (e.g. 6)
+	#nclasses= len(id2target)   # - This counts all classes (e.g. 6)
 	num_labels= len(id2label)  # - If skip_first_class, this is =5
+	nclasses= num_labels
 	label_names= list(label2id.keys())
 	
 	print("id2label")
