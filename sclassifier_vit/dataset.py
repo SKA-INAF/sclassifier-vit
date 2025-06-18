@@ -219,7 +219,7 @@ class AstroImageDataset(Dataset):
 		print(img.max())
 			
 		# - Convert numpy image to tensor	
-		img = torch.from_numpy(img)
+		img = torch.from_numpy(img.transpose((2, 0, 1))).contiguous()
 
 		print("tensor img")
 		print(img.dtype)
