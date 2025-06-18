@@ -490,8 +490,10 @@ def main():
 	else:
 		n_batches= math.ceil(nsamples / batch_size)
                     
-	num_update_steps_per_epoch = n_batches // gradient_accumulation_steps 
-	num_update_steps_per_epoch = max(num_update_steps_per_epoch, 1)
+	#num_update_steps_per_epoch = n_batches // gradient_accumulation_steps 
+	#num_update_steps_per_epoch = max(num_update_steps_per_epoch, 1)
+	num_update_steps_per_epoch = max(n_batches // gradient_accumulation_steps + int(n_batches % gradient_accumulation_steps > 0), 1)
+	
 	max_steps = math.ceil(nepochs * num_update_steps_per_epoch)
 	
 	#training_steps = (nsamples / batch_size) * nepochs
