@@ -586,6 +586,12 @@ def load_img_as_pil_rgb(filename, resize=False, resize_size=224, apply_zscale=Tr
   if data is None:
     logger.warn("Read image is None!")
     return None
+    
+	print("data.dtype")
+	print(data.dtype)
+	print(data.shape)
+	print(data.min())
+	print(data.max())  
 
   # - Convert to PIL RGB image
   return Image.fromarray(data).convert("RGB")
