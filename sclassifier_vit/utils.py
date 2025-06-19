@@ -589,4 +589,4 @@ def load_img_as_pil_rgb(filename, resize=False, resize_size=224, apply_zscale=Tr
     return None
     
   # - Convert to PIL RGB image (NB: with 3 chan fromarray requires uint18 0-255 data)
-  return Image.fromarray(data.astype(np.uint8).convert("RGB")
+  return Image.fromarray(data.astype(np.uint8)).convert("RGB")
