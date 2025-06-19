@@ -588,11 +588,5 @@ def load_img_as_pil_rgb(filename, resize=False, resize_size=224, apply_zscale=Tr
     logger.warn("Read image is None!")
     return None
     
-  print("data.dtype")
-  print(data.dtype)
-  print(data.shape)
-  print(data.min())
-  print(data.max())  
-
-  # - Convert to PIL RGB image
+  # - Convert to PIL RGB image (NB: with 3 chan fromarray requires uint18 0-255 data)
   return Image.fromarray(data).convert("RGB")
