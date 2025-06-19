@@ -459,8 +459,8 @@ def read_img(filename, nchans=1, norm_range=(0.,1.), resize=False, resize_size=2
     verbose=verbose
   )
 
-  #return data_transf.astype(float)
-  return data_transf
+  return data_transf.astype(float)
+  #return data_transf
 
 def load_img_as_npy_float(filename, add_chan_axis=True, add_batch_axis=True, resize=False, resize_size=224, apply_zscale=True, contrast=0.25, set_nans_to_min=False, verbose=False):
   """ Return numpy float image array norm to [0,1] """
@@ -580,7 +580,7 @@ def load_img_as_pil_rgb(filename, resize=False, resize_size=224, apply_zscale=Tr
     norm_range=(0.,255.),
     resize=resize, resize_size=resize_size,
     apply_zscale=apply_zscale, contrast=contrast,
-    to_uint8=True,
+    to_uint8=False,
     set_nans_to_min=set_nans_to_min,
     verbose=verbose
   )
@@ -589,4 +589,4 @@ def load_img_as_pil_rgb(filename, resize=False, resize_size=224, apply_zscale=Tr
     return None
     
   # - Convert to PIL RGB image (NB: with 3 chan fromarray requires uint18 0-255 data)
-  return Image.fromarray(data).convert("RGB")
+  return Image.fromarray(data.astype(np.uint8).convert("RGB")
