@@ -572,20 +572,20 @@ def load_img_as_pil_float(filename, resize=False, resize_size=224, apply_zscale=
 def load_img_as_pil_rgb(filename, resize=False, resize_size=224, apply_zscale=True, contrast=0.25, set_nans_to_min=False, to_uint8=False, verbose=False):
   """ Convert numpy array to PIL 3chan RGB image norm to [0,255], uint8 """
 
-  # - Read FITS from file and get transformed npy array
-  data= read_img(
-    filename,
-    nchans=3,
-    norm_range=(0.,255.),
-    resize=resize, resize_size=resize_size,
-    apply_zscale=apply_zscale, contrast=contrast,
-    to_uint8=to_uint8,
-    set_nans_to_min=set_nans_to_min,
-    verbose=verbose
-  )
-  if data is None:
-    logger.warn("Read image is None!")
-    return None
+	# - Read FITS from file and get transformed npy array
+	data= read_img(
+		filename,
+		nchans=3,
+		norm_range=(0.,255.),
+		resize=resize, resize_size=resize_size,
+		apply_zscale=apply_zscale, contrast=contrast,
+		to_uint8=to_uint8,
+		set_nans_to_min=set_nans_to_min,
+		verbose=verbose
+	)
+	if data is None:
+		logger.warn("Read image is None!")
+		return None
     
 	print("data.dtype")
 	print(data.dtype)
@@ -593,5 +593,5 @@ def load_img_as_pil_rgb(filename, resize=False, resize_size=224, apply_zscale=Tr
 	print(data.min())
 	print(data.max())  
 
-  # - Convert to PIL RGB image
-  return Image.fromarray(data).convert("RGB")
+	# - Convert to PIL RGB image
+	return Image.fromarray(data).convert("RGB")
