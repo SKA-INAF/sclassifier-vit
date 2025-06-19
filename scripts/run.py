@@ -135,6 +135,8 @@ def get_args():
 	# - Run options
 	parser.add_argument('-device', '--device', dest='device', required=False, type=str, default="cuda:0", action='store',help='Device identifier')
 	parser.add_argument('-runname', '--runname', dest='runname', required=False, type=str, default="llava_1.5_radio", action='store',help='Run name')
+	parser.add_argument('--verbose', dest='verbose', action='store_true',help='Enable verbose printout (default=false)')	
+	parser.set_defaults(verbose=False)
 	
 	# - Output options
 	parser.add_argument('-outdir','--outdir', dest='outdir', required=False, default="", type=str, help='Output data dir') 
@@ -179,6 +181,7 @@ def main():
 	run_eval_on_step= args.run_eval_on_step
 	logging_steps= args.logging_steps
 	run_name= args.runname
+	verbose= args.verbose
 	
 	outfile= args.outfile
 	
@@ -679,17 +682,18 @@ def main():
 				image_info["label_pred"]= list(predicted_labels)
 				image_info["prob_pred"]= list(predicted_probs) 
 				
-				print("== Image: %s ==" % (sname))
-				print("--> logits")
-				print(logits)
-				print("--> probs")
-				print(probs)
-				print("--> predicted class id enc")
-				print(predictions)
-				print("--> predicted labels")
-				print(predicted_labels)
-				print("--> predicted probs")
-				print(predicted_probs)
+				if verbose:
+					print("== Image: %s ==" % (sname))
+					print("--> logits")
+					print(logits)
+					print("--> probs")
+					print(probs)
+					print("--> predicted class id enc")
+					print(predictions)
+					print("--> predicted labels")
+					print(predicted_labels)
+					print("--> predicted probs")
+					print(predicted_probs)
 					
 			else:
 				softmax = torch.nn.Softmax(dim=0)
@@ -702,18 +706,19 @@ def main():
 				image_info["label_pred"]= str(predicted_label)
 				image_info["prob_pred"]= float(predicted_prob)
 					
-				print("== Image: %s ==" % (sname))
-				print("logits.squeeze().cpu()")
-				print(logits.squeeze().cpu())
-				print(logits.squeeze().cpu().shape)
-				print("--> probs")
-				print(probs)
-				print("--> predicted class id")
-				print(class_id)
-				print("--> predicted label")
-				print(predicted_label)
-				print("--> predicted probs")
-				print(predicted_prob)
+				if verbose:
+					print("== Image: %s ==" % (sname))
+					print("logits.squeeze().cpu()")
+					print(logits.squeeze().cpu())
+					print(logits.squeeze().cpu().shape)
+					print("--> probs")
+					print(probs)
+					print("--> predicted class id")
+					print(class_id)
+					print("--> predicted label")
+					print(predicted_label)
+					print("--> predicted probs")
+					print(predicted_prob)
 			
 			inference_results["data"].append(image_info)
 			
