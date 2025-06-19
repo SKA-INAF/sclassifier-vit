@@ -343,6 +343,9 @@ def main():
 			T.Normalize(mean=mean, std=std),
 		]
 	)
+	
+	if run_predict:
+		transform_test= None
 
 	##################################
 	##     DATASET
