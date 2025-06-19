@@ -160,8 +160,8 @@ class AstroImageDataset(Dataset):
 		
 		self.pil2tensor = T.Compose([T.PILToTensor()])
 		
-	def load_image(self, idx):
-		""" Load image """
+	def load_pil_image(self, idx):
+		""" Load image """	
 		
 		# - Get image path
 		item= self.datalist[idx]
@@ -169,29 +169,46 @@ class AstroImageDataset(Dataset):
 		image_ext= os.path.splitext(image_path)[1]
 		
 		# - Read image (FITS/natural image supported) and then convert to PIL either as 1D or 3-chan image, normalized to [0,1]
-		#if self.load_as_gray:
-		#	img= load_img_as_pil_float(
-		#		image_path, 
-		#		resize=self.resize, resize_size=self.resize_size, 
-		#		apply_zscale=self.apply_zscale, contrast=self.zscale_contrast, 
-		#		set_nans_to_min=False, 
-		#		verbose=False
-		#	)
-		#else:
-		#	img= load_img_as_pil_rgb_float(
-		#		image_path, 
-		#		resize=self.resize, resize_size=self.resize_size, 
-		#		apply_zscale=self.apply_zscale, contrast=self.zscale_contrast, 
-		#		set_nans_to_min=False,
-		#		to_uint8=True, 
-		#		verbose=False
-		#	)
+		if self.load_as_gray:
+			img= load_img_as_pil_float(
+				image_path, 
+				resize=self.resize, resize_size=self.resize_size, 
+				apply_zscale=self.apply_zscale, contrast=self.zscale_contrast, 
+				set_nans_to_min=False, 
+				verbose=False
+			)
+		else:
+			img= load_img_as_pil_rgb_float(
+				image_path, 
+				resize=self.resize, resize_size=self.resize_size, 
+				apply_zscale=self.apply_zscale, contrast=self.zscale_contrast, 
+				set_nans_to_min=False,
+				to_uint8=True, 
+				verbose=False
+			)
 			
 		# - Convert PIL image to tensor if needed
-		#if isinstance(img, PIL.Image.Image):
-		#	img = self.pil2tensor(img).float()
+		if isinstance(img, PIL.Image.Image):
+			img = self.pil2tensor(img).float()
 
+		# - Replace NaN or Inf with zeros
+		img[~torch.isfinite(img)] = 0
 
+		# - Apply transforms
+		if self.transform:
+			img = self.transform(img)
+		
+		return img
+
+		
+	def load_image(self, idx):
+		""" Load tensor """
+		
+		# - Get image path
+		item= self.datalist[idx]
+		image_path= item["filepaths"][0]
+		image_ext= os.path.splitext(image_path)[1]
+		
 		# - Read image (FITS/natural image supported) and then convert to numpy either as 1D or 3-chan image, normalized to [0,1]
 		if self.load_as_gray:
 			img= load_img_as_npy_float(
