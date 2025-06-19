@@ -653,7 +653,7 @@ def main():
 			# - Load image & extract embeddings
 			image= dataset.load_image(i)
 			#pixel_values= processor(image, return_tensors="pt").pixel_values.to(device)
-			pixel_values= image.to(device)
+			pixel_values= image.unsqueeze(0).to(device)
  
 			with torch.no_grad():
 				outputs = model(pixel_values)
