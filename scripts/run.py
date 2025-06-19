@@ -655,18 +655,24 @@ def main():
 			sname= image_info["sname"]
 			
 			# - Load image & extract embeddings
-			image= dataset.load_image(i)
-			#pixel_values= processor(image, return_tensors="pt").pixel_values.to(device)
-			pixel_values= image.unsqueeze(0).to(device)
+			image= dataset.load_pil_image(i)
+			pixel_values= processor(image, return_tensors="pt").pixel_values.to(device)
+			
+			image_tensor= dataset.load_tensor(i)
+			image_tensor= image_tensor.unsqueeze(0).to(device)
  
 			with torch.no_grad():
-				outputs = model(pixel_values)
+				outputs = model(image_tensor)
 				logits = outputs.logits
-  
+				
+				outputs_v2 = model(pixel_values)
+				logits_v2 = outputs_v2.logits
+				
   		# - Compute predicted labels & probs
 			if multilabel:
 				sigmoid = torch.nn.Sigmoid()
 				probs = sigmoid(logits.squeeze().cpu()).numpy()
+				probs_v2 = sigmoid(logits_v2.squeeze().cpu()).numpy()
 				predictions = np.zeros(probs.shape)
 				predictions[np.where(probs >= sigmoid_thr)] = 1 # turn predicted id's into actual label names
 				
@@ -689,6 +695,9 @@ def main():
 					print(logits)
 					print("--> probs")
 					print(probs)
+					print("--> probs_v2")
+					print(probs_v2)
+					
 					print("--> predicted class id enc")
 					print(predictions)
 					print("--> predicted labels")
