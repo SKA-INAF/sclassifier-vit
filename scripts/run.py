@@ -293,6 +293,7 @@ def main():
 	print("do_normalize? ", (processor.do_normalize))
 	print("mean: ", (mean))
 	print("std: ", (std))
+	print("do_convert_rgb? ", (processor.do_convert_rgb))
 	
 	mean= [0.,0.,0.]
 	std= [1.,1.,1.]
