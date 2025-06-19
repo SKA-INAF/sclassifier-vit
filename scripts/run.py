@@ -687,7 +687,7 @@ def main():
 					
 				# - Fill prediction results in summary dict
 				image_info["label_pred"]= list(predicted_labels)
-				image_info["prob_pred"]= list(predicted_probs) 
+				image_info["prob_pred"]= list([float(item) for item in predicted_probs])
 				
 				if verbose:
 					print("== Image: %s ==" % (sname))
