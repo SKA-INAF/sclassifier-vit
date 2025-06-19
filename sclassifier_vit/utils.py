@@ -566,8 +566,8 @@ def load_img_as_pil_float(filename, resize=False, resize_size=224, apply_zscale=
     logger.warn("Read image is None!")
     return None
 
-	# - Convert to PIL image
-	return Image.fromarray(data)
+  # - Convert to PIL image
+  return Image.fromarray(data)
 
 def load_img_as_pil_rgb(filename, resize=False, resize_size=224, apply_zscale=True, contrast=0.25, set_nans_to_min=False, to_uint8=False, verbose=False):
   """ Convert numpy array to PIL 3chan RGB image norm to [0,255], uint8 """
