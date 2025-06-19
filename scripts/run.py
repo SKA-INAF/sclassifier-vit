@@ -113,7 +113,7 @@ def get_args():
 	#parser.set_defaults(use_warmup_lr_schedule=False)
 	#parser.add_argument('-nepochs_warmup', '--nepochs_warmup', dest='nepochs_warmup', required=False, type=int, default=10, action='store',help='Number of epochs used in network training for warmup (default=100)')
 
-	parser.add_argument('-augmenter', '--augmenter', dest='augmenter', required=False, type=str, default='v1', action='store',help='Predefined augmenter to be used (default=v1)')
+	parser.add_argument('-augmenter', '--augmenter', dest='augmenter', required=False, type=str, default='v1', action='store', help='Predefined augmenter to be used (default=v1)')
 	parser.add_argument('--skip_first_class', dest='skip_first_class', action='store_true',help='Skip first class (e.g. NONE/BACKGROUND) in multilabel classifier (default=false)')	
 	parser.set_defaults(skip_first_class=False)
 	
