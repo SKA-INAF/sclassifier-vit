@@ -735,7 +735,7 @@ def main():
 		# - Save json file
 		logger.info("Saving inference results with prediction info to file %s ..." % (outfile))
 		with open(outfile, 'w') as fp:
-			json.dump(inference_results, fp)
+			json.dump(inference_results, fp, indent=2)
 	
 	################################
 	##    TRAIN
