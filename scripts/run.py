@@ -344,8 +344,8 @@ def main():
 		]
 	)
 	
-	if run_predict:
-		transform_test= None
+	#if run_predict:
+	#	transform_test= None
 
 	##################################
 	##     DATASET
@@ -652,7 +652,8 @@ def main():
 			
 			# - Load image & extract embeddings
 			image= dataset.load_image(i)
-			pixel_values= processor(image, return_tensors="pt").pixel_values.to(device)
+			#pixel_values= processor(image, return_tensors="pt").pixel_values.to(device)
+			pixel_values= image.to(device)
  
 			with torch.no_grad():
 				outputs = model(pixel_values)
