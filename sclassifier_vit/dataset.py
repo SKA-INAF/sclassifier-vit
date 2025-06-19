@@ -161,7 +161,7 @@ class AstroImageDataset(Dataset):
 		self.pil2tensor = T.Compose([T.PILToTensor()])
 		
 	def load_pil_image(self, idx):
-		""" Load image """	
+		""" Load image as PIL """	
 		
 		# - Get image path
 		item= self.datalist[idx]
@@ -188,21 +188,21 @@ class AstroImageDataset(Dataset):
 			)
 			
 		# - Convert PIL image to tensor if needed
-		if isinstance(img, PIL.Image.Image):
-			img = self.pil2tensor(img).float()
+		#if isinstance(img, PIL.Image.Image):
+		#	img = self.pil2tensor(img).float()
 
 		# - Replace NaN or Inf with zeros
-		img[~torch.isfinite(img)] = 0
+		#img[~torch.isfinite(img)] = 0
 
 		# - Apply transforms
-		if self.transform:
-			img = self.transform(img)
+		#if self.transform:
+		#	img = self.transform(img)
 		
 		return img
 
 		
-	def load_image(self, idx):
-		""" Load tensor """
+	def load_npy_image(self, idx):
+		""" Load image as numpy """	
 		
 		# - Get image path
 		item= self.datalist[idx]
@@ -231,6 +231,9 @@ class AstroImageDataset(Dataset):
 				verbose=self.verbose
 			)
 			
+		# - Replace NaN or Inf with zeros
+		img[~np.isfinite(img)] = 0
+		
 		#if verbose:
 		#	print("npy img")
 		#	print(img.dtype)
@@ -238,19 +241,28 @@ class AstroImageDataset(Dataset):
 		#	print(img.min())
 		#	print(img.max())
 			
+		return img
+				
+				
+	def load_tensor(self, idx):
+		""" Load tensor """			
+		
+		# - Load image as npy
+		img= self.load_npy_image(idx)
+		
 		# - Convert numpy image to tensor	
 		img = torch.from_numpy(img.transpose((2, 0, 1))).contiguous()
-
+		
+		# - Replace NaN or Inf with zeros
+		img[~torch.isfinite(img)] = 0
+		
 		#if verbose:
 		#	print("tensor img")
 		#	print(img.dtype)
 		#	print(img.shape)
 		#	print(img.min())
 		#	print(img.max())
-
-		# - Replace NaN or Inf with zeros
-		img[~torch.isfinite(img)] = 0
-
+		
 		# - Apply transforms
 		if self.transform:
 			img = self.transform(img)
@@ -336,7 +348,7 @@ class MultiLabelDataset(AstroImageDataset):
 		""" Iterator providing training data (pixel_values + labels) """
 		
 		# - Load image at index as tensor 
-		image_tensor= self.load_image(idx)
+		image_tensor= self.load_tensor(idx)
 		
 		# - Get class ids
 		ids= self.datalist[idx]['id']
@@ -434,7 +446,7 @@ class SingleLabelDataset(AstroImageDataset):
 		""" Iterator providing training data (pixel_values + labels) """
 		
 		# - Load image at index as tensor 
-		image_tensor= self.load_image(idx)
+		image_tensor= self.load_tensor(idx)
 		
 		# - Get class ids
 		class_id= self.datalist[idx]['id']
