@@ -443,6 +443,14 @@ def main():
 	log_dir= os.path.join(output_dir, "logs/")
 	#logger.debug("log_dir=%s" % (log_dir))
 	
+	# - Set eval strategy
+	eval_strategy= "no"
+	if dataset_cv is not None:
+		if run_eval_on_step:
+			eval_strategy= "steps"
+		else:
+			eval_strategy= "epoch"
+	
 	# - Set training options
 	logger.info("Set model options ...")
 	training_opts= transformers.TrainingArguments(
@@ -459,7 +467,8 @@ def main():
 		per_device_eval_batch_size=batch_size,
 		gradient_accumulation_steps=gradient_accumulation_steps,
 		dataloader_drop_last= drop_last,
-		eval_strategy="steps" if run_eval_on_step else "epoch",
+		#eval_strategy="steps" if run_eval_on_step else "epoch",
+		eval_strategy=eval_strategy,
 		eval_on_start=run_eval_on_start,
 		eval_steps=logging_steps,
 		##batch_eval_metrics=False,
