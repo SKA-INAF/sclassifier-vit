@@ -679,6 +679,8 @@ def main():
 				image_info["prob_pred"]= list(predicted_probs) 
 				
 				print("== Image: %s ==" % (sname))
+				print("--> logits")
+				print(logits)
 				print("--> probs")
 				print(probs)
 				print("--> predicted class id enc")
