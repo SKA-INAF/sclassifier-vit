@@ -178,7 +178,7 @@ class AstroImageDataset(Dataset):
 				verbose=False
 			)
 		else:
-			img= load_img_as_pil_rgb_float(
+			img= load_img_as_pil_rgb(
 				image_path, 
 				resize=self.resize, resize_size=self.resize_size, 
 				apply_zscale=self.apply_zscale, contrast=self.zscale_contrast, 
