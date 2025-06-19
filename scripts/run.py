@@ -277,13 +277,20 @@ def main():
 	std = processor.image_std
 
 	print("*** Image processor config pars ***")
-	print("size")
-	print(size)
-	print("mean")
-	print(mean)
-	print("std")
-	print(std)
-
+	#print("size")
+	#print(size)
+	#print("mean")
+	#print(mean)
+	#print("std")
+	#print(std)
+	print("do_resize? ", (processor.do_resize))
+	print("size: ", (size))
+	print("do_rescale? ", (processor.do_rescale))
+	print("rescale_factor: ", (processor.rescale_factor))
+	print("do_normalize? ", (processor.do_normalize))
+	print("mean: ", (mean))
+	print("std: ", (std))
+	
 	mean= [0.,0.,0.]
 	std= [1.,1.,1.]
 
