@@ -94,7 +94,7 @@ def get_args():
 	parser.set_defaults(predict=False)
 	parser.add_argument('--test', dest='test', action='store_true', help='Run model test on input data (default=false)')	
 	parser.set_defaults(test=False)
-	parser.add_argument('-modelfile', '--modelfile', dest='modelfile', required=False, type=str, default="google/siglip-so400m-patch14-384", action='store',help='Model pretrained file name or weight path to be loaded {google/siglip-large-patch16-256, google/siglip-base-patch16-256, google/siglip-base-patch16-256-i18n, google/siglip-so400m-patch14-384, google/siglip-base-patch16-224}')
+	parser.add_argument('-modelfile', '--modelfile', dest='modelfile', required=False, type=str, default="google/siglip-so400m-patch14-384", action='store', help='Model pretrained file name or weight path to be loaded {google/siglip-large-patch16-256, google/siglip-base-patch16-256, google/siglip-base-patch16-256-i18n, google/siglip-so400m-patch14-384, google/siglip-base-patch16-224}')
 	
 	parser.add_argument('-ngpu', '--ngpu', dest='ngpu', required=False, type=int, default=1, action='store',help='Number of gpus used for the run. Needed to compute the global number of training steps (default=1)')	
 	parser.add_argument('-nepochs', '--nepochs', dest='nepochs', required=False, type=int, default=1, action='store',help='Number of epochs used in network training (default=100)')	
@@ -661,6 +661,9 @@ def main():
 		inference_results= {"data": []}
 		
 		for i in range(nsamples):
+			if i%1000==0:
+				logger.info("#%d/%d images processed ..." % (i+1, nsamples))
+		
 			# - Retrieve image info
 			image_info= dataset.load_image_info(i)
 			sname= image_info["sname"]
