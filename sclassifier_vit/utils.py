@@ -459,7 +459,7 @@ def read_img(filename, nchans=1, norm_range=(0.,1.), resize=False, resize_size=2
     verbose=verbose
   )
   
-  if data is None:
+  if data_transf is None:
     return None
 
   return data_transf.astype(float)
