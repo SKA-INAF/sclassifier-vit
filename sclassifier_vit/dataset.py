@@ -186,6 +186,10 @@ class AstroImageDataset(Dataset):
 				verbose=False
 			)
 			
+		# - Check for None
+		if img is None:
+			return None
+			
 		# - Convert PIL image to tensor if needed
 		#if isinstance(img, PIL.Image.Image):
 		#	img = self.pil2tensor(img).float()
@@ -230,6 +234,10 @@ class AstroImageDataset(Dataset):
 				verbose=self.verbose
 			)
 			
+		# - Check for None
+		if img is None:
+			return None
+			
 		# - Replace NaN or Inf with zeros
 		img[~np.isfinite(img)] = 0
 		
@@ -248,6 +256,10 @@ class AstroImageDataset(Dataset):
 		
 		# - Load image as npy
 		img= self.load_npy_image(idx)
+		
+		# - Check for None
+		if img is None:
+			return None
 		
 		# - Convert numpy image to tensor	
 		img = torch.from_numpy(img.transpose((2, 0, 1))).contiguous()
