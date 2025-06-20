@@ -670,6 +670,9 @@ def main():
 			#pixel_values= processor(image, return_tensors="pt").pixel_values.to(device)
 			
 			image_tensor= dataset.load_tensor(i)
+			if image_tensor is None:
+				logger.warning("Skip None tensor at index %d ..." % (i))
+				continue
 			image_tensor= image_tensor.unsqueeze(0).to(device)
  
 			with torch.no_grad():

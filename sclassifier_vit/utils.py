@@ -430,11 +430,15 @@ def read_img(filename, nchans=1, norm_range=(0.,1.), resize=False, resize_size=2
     file_ext= os.path.splitext(filename)[1]
 
     # - Read fits image?
-    if file_ext=='.fits':
-      data= fits.open(filename)[0].data
-    else:
-      image= Image.open(filename)
-      data= np.asarray(image)
+    try:
+      if file_ext=='.fits':
+        data= fits.open(filename)[0].data
+      else:
+        image= Image.open(filename)
+        data= np.asarray(image)
+    except Exception as e:
+      logger.error("Failed to read image %s (err=%s), returning None..." % (filename, str(e)))
+      return None
 
   else:
     try:
