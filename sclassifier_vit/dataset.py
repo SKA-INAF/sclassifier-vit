@@ -34,15 +34,6 @@ def get_multi_label_target_maps(schema="morph_tags", skip_first_class=False):
 	""" Return multi-label classifier target maps """
 
 	if schema=="morph_tags":
-		#id2target= {
-		#	0: 0, # background
-		#	1: 1, # radio-galaxy
-		#	2: 2, # extended
-		#	3: 3, # diffuse
-		#	4: 4, # diffuse-large
-		#	5: 5, # artefact
-		#}
-			
 		if skip_first_class:
 			id2target= {
 				0: -1, # background
@@ -78,6 +69,36 @@ def get_multi_label_target_maps(schema="morph_tags", skip_first_class=False):
 				3: "DIFFUSE",
 				4: "DIFFUSE-LARGE",
 				5: "ARTEFACT"
+			}
+			
+	if schema=="morph_tags_B1":
+		if skip_first_class:
+			id2target= {
+				0: -1, # NONE
+				1: 0, # EXTENDED
+				2: 1, # DIFFUSE
+				3: 2, # DIFFUSE-LARGE 
+			}
+			
+			id2label= {
+				0: "EXTENDED",
+				1: "DIFFUSE",
+				2: "DIFFUSE-LARGE",
+			}
+			
+		else:
+			id2target= {
+				0: 0, # NONE
+				1: 1, # EXTENDED
+				2: 2, # DIFFUSE
+				3: 3, # DIFFUSE-LARGE 
+			}
+		
+			id2label= {
+				0: "NONE",
+				1: "EXTENDED",
+				2: "DIFFUSE",
+				3: "DIFFUSE-LARGE",
 			}	
 			
 		

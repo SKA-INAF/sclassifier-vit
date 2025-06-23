@@ -130,7 +130,7 @@ def get_args():
 	
 	parser.add_argument('--multilabel', dest='multilabel', action='store_true',help='Do multilabel classification (default=false)')	
 	parser.set_defaults(multilabel=False)
-	parser.add_argument('-label_schema', '--label_schema', dest='label_schema', required=False, type=str, default='morph_tags', action='store',help='Predefined label schema to be used {morph_tags,morph_class} (default=morph_tags)')
+	parser.add_argument('-label_schema', '--label_schema', dest='label_schema', required=False, type=str, default='morph_tags', action='store',help='Predefined label schema to be used {morph_tags, morph_tags_B1, morph_class} (default=morph_tags)')
 	
 	# - Run options
 	parser.add_argument('-device', '--device', dest='device', required=False, type=str, default="cuda:0", action='store',help='Device identifier')
