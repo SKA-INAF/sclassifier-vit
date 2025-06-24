@@ -159,6 +159,19 @@ def get_single_label_target_maps(schema="morph_tags"):
 			1: "YES"
 		}	
 		
+	elif schema=="anomaly_class":
+		id2target= {
+			0: 0, 
+			1: 1,
+			2: 2
+		}
+		
+		id2label= {
+			0: "ORDINARY",
+			1: "COMPLEX",
+			2: "PECULIAR"
+		}	
+		
 	# - Compute reverse dict
 	label2id= {v: k for k, v in id2label.items()}
 	
