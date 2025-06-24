@@ -148,6 +148,17 @@ def get_single_label_target_maps(schema="morph_tags"):
 			5: "ARTEFACT"
 		}
 		
+	elif schema=="binary_qa":
+		id2target= {
+			0: 0, 
+			1: 1
+		}
+		
+		id2label= {
+			0: "NO",
+			1: "YES"
+		}	
+		
 	# - Compute reverse dict
 	label2id= {v: k for k, v in id2label.items()}
 	
