@@ -132,6 +132,8 @@ def get_args():
 	parser.set_defaults(multilabel=False)
 	parser.add_argument('-label_schema', '--label_schema', dest='label_schema', required=False, type=str, default='morph_tags', action='store',help='Predefined label schema to be used {morph_tags, morph_tags_B1, morph_class} (default=morph_tags)')
 	
+	parser.add_argument('-background_label', '--background_label', dest='background_label', required=False, type=str, default='BACKGROUND', action='store',help='Name of background class used in predict when skip_first_class is enabled (default=BACKGROUND)')
+	
 	# - Run options
 	parser.add_argument('-device', '--device', dest='device', required=False, type=str, default="cuda:0", action='store',help='Device identifier')
 	parser.add_argument('-runname', '--runname', dest='runname', required=False, type=str, default="llava_1.5_radio", action='store',help='Run name')
@@ -700,7 +702,7 @@ def main():
 					#print(max(probs))
 					min_prob= 1 - max(probs)
 					predicted_probs= [min_prob]
-					predicted_labels= ["BACKGROUND"]	
+					predicted_labels= [args.background_label]	
 					
 				# - Fill prediction results in summary dict
 				image_info["label_pred"]= list(predicted_labels)
