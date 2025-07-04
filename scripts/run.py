@@ -30,6 +30,7 @@ import transformers
 from transformers import pipeline
 from transformers import AutoProcessor, AutoModel
 from transformers import AutoImageProcessor, AutoModelForImageClassification
+from transformers import ViTForImageClassification, ViTConfig
 from transformers.configuration_utils import PretrainedConfig
 from transformers.modeling_utils import PreTrainedModel
 from transformers.data.data_collator import DataCollator
@@ -94,6 +95,10 @@ def get_args():
 	parser.set_defaults(predict=False)
 	parser.add_argument('--test', dest='test', action='store_true', help='Run model test on input data (default=false)')	
 	parser.set_defaults(test=False)
+	
+	parser.add_argument('--vitloader', dest='vitloader', action='store_true', help='If enabled use ViTForImageClassification to load model otherwise AutoModelForImageClassification (default=false)')	
+	parser.set_defaults(vitloader=False)
+	
 	parser.add_argument('-modelfile', '--modelfile', dest='modelfile', required=False, type=str, default="google/siglip-so400m-patch14-384", action='store', help='Model pretrained file name or weight path to be loaded {google/siglip-large-patch16-256, google/siglip-base-patch16-256, google/siglip-base-patch16-256-i18n, google/siglip-so400m-patch14-384, google/siglip-base-patch16-224}')
 	
 	parser.add_argument('-ngpu', '--ngpu', dest='ngpu', required=False, type=int, default=1, action='store',help='Number of gpus used for the run. Needed to compute the global number of training steps (default=1)')	
@@ -237,13 +242,30 @@ def main():
 	##################################
 	# - Create model
 	logger.info("Creating model (name=%s) ..." % (modelname))
-	model = AutoModelForImageClassification.from_pretrained(
-		modelname, 
-		problem_type="multi_label_classification" if multilabel else "single_label_classification", 
-		id2label=id2label, 
-		label2id=label2id,
-		num_labels=num_labels
-	)
+		
+	if vitloader:
+		config= ViTConfig.from_pretrained(
+			modelname,
+			problem_type="multi_label_classification" if multilabel else "single_label_classification", 
+			id2label=id2label, 
+			label2id=label2id,
+			num_labels=num_labels
+		)
+		
+		model= ViTForImageClassification.from_pretrained(
+			modelname,
+			config=config
+		)
+		
+	else:
+		model = AutoModelForImageClassification.from_pretrained(
+			modelname, 
+			problem_type="multi_label_classification" if multilabel else "single_label_classification", 
+			id2label=id2label, 
+			label2id=label2id,
+			num_labels=num_labels
+		)
+		
 	model= model.to(device)
 	
 	print("*** MODEL ***")
