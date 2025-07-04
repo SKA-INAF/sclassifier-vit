@@ -243,7 +243,7 @@ def main():
 	# - Create model
 	logger.info("Creating model (name=%s) ..." % (modelname))
 		
-	if vitloader:
+	if args.vitloader:
 		config= ViTConfig.from_pretrained(
 			modelname,
 			problem_type="multi_label_classification" if multilabel else "single_label_classification", 
