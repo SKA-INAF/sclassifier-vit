@@ -93,7 +93,7 @@ class DataTrainingArguments:
         default=False,
         metadata={"help": "Resize input image before model processor. If false the model processor will resize anyway to its image size"}
     )
-	  resize_size: Optional[int] = field(default=224, metadata={"help": "Resize size in pixels used if --resize option is enabled"})
+    resize_size: Optional[int] = field(default=224, metadata={"help": "Resize size in pixels used if --resize option is enabled"})
 
 	
     #dataset_name: Optional[str] = field(
