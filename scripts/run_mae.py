@@ -47,6 +47,7 @@ from datasets import Dataset
 # - SCLASSIFIER-VIT MODULES
 from sclassifier_vit.utils import *
 from sclassifier_vit.dataset import PreTrainDataset, PreTrainDatasetGenerator 
+from sclassifier_vit.custom_transforms import FlippingTransform, Rotate90Transform
 from sclassifier_vit import logger
 
 # - Configure wandb
