@@ -335,6 +335,7 @@ class AstroImageDataset(Dataset):
 	def get_sample_size(self):
 		return len(self.datalist)
 		
+		
 ################################################
 ###      DATASET (MULTI-LABEL CLASSIFICATION
 ################################################
@@ -515,4 +516,47 @@ class SingleLabelDataset(AstroImageDataset):
 		target_ids_hotenc= torch.from_numpy(np.array(target_ids_hotenc).astype(np.float32))
 		
 		return image_tensor, target_ids_hotenc		
+		
+		
+################################################
+###      PRETRAIN DATASET
+################################################
+class PreTrainDataset(AstroImageDataset):
+	""" Dataset to load astro images in FITS format for pretraining """
+	
+	def __init__(self, 
+			filename, 
+			transform=None, 
+			load_as_gray=False,
+			apply_zscale=False,
+			zscale_contrast=0.25,
+			resize=False,
+			resize_size=224,
+			verbose=False
+		):
+		super().__init__(
+			filename, 
+			transform,
+			load_as_gray,
+			apply_zscale, zscale_contrast,
+			resize, resize_size,
+			verbose
+		)	
+		
+	def __getitem__(self, idx):
+		""" Iterator providing training data (pixel_values + labels) """
+		
+		# - Load image at index as tensor 
+		image_tensor= self.load_tensor(idx)
+		
+		# - Get class ids (dummy)
+		#class_id= self.datalist[idx]['id']
+		
+		#return image_tensor
+		return {"image": image_tensor}
+				
+def PreTrainDatasetGenerator(dataset: PreTrainDataset):
+	""" Generator to convert PyTorch to HuggingFace datasets """
+	for i in range(len(dataset)):
+		yield dataset[i]
 		
