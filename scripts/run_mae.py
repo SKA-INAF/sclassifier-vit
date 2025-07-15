@@ -321,7 +321,7 @@ def main():
 
     transform_val = T.Compose(
         [
-             T.Resize(size, interpolation=T.InterpolationMode.BICUBIC),
+             T.Resize(data_args.resize_size, interpolation=T.InterpolationMode.BICUBIC),
              #T.ToTensor(),
              #T.Normalize(mean=mean, std=std),
         ]
