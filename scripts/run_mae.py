@@ -515,7 +515,8 @@ def main():
     #    return examples
 
     if training_args.do_train:
-        if "train" not in ds:
+        #if "train" not in ds:
+        if not ds_train:
             raise ValueError("--do_train requires a train dataset")
         if data_args.max_train_samples is not None:
             #ds["train"] = ds["train"].shuffle(seed=training_args.seed).select(range(data_args.max_train_samples))
@@ -526,7 +527,8 @@ def main():
         #ds_train.set_transform(preprocess_images)
 
     if training_args.do_eval:
-        if "validation" not in ds:
+        #if "validation" not in ds:
+        if not ds_val:
             raise ValueError("--do_eval requires a validation dataset")
         if data_args.max_eval_samples is not None:
             #ds["validation"] = (
