@@ -53,7 +53,7 @@ setup(
 	download_url="https://github.com/SKA-INAF/sclassifier-vit/archive/refs/tags/v1.0.0.tar.gz",
 	packages=['sclassifier_vit'],
 	install_requires=reqs,
-	scripts=['scripts/run.py'],
+	scripts=['scripts/run.py', 'scripts/run_mae.py'],
 	classifiers=[
 		'Development Status :: 5 - Production/Stable',
 		'Intended Audience :: Science/Research',
