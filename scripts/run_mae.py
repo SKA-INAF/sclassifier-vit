@@ -286,72 +286,72 @@ def main():
     mean= [0.,0.,0.]
     std= [1.,1.,1.] 
     sigma_min= 1.0
-	  sigma_max= 3.0
-	  ksize= 3.3 * sigma_max
-	  kernel_size= int(max(ksize, 5)) # in imgaug kernel_size viene calcolato automaticamente dalla sigma così, ma forse si può semplificare a 3x3
-	  blur_aug= T.GaussianBlur(kernel_size, sigma=(sigma_min, sigma_max))
+    sigma_max= 3.0
+    ksize= 3.3 * sigma_max
+    kernel_size= int(max(ksize, 5)) # in imgaug kernel_size viene calcolato automaticamente dalla sigma così, ma forse si può semplificare a 3x3
+    blur_aug= T.GaussianBlur(kernel_size, sigma=(sigma_min, sigma_max))
 
-	  transform_v1 = T.Compose(
-		  [
-			  T.Resize(size, interpolation=T.InterpolationMode.BICUBIC),
-			  FlippingTransform(),
-			  Rotate90Transform(),
-			  #T.ToTensor(),
-			  #T.Normalize(mean=mean, std=std),
-		  ]
-	  )
-	
-	  transform_v2 = T.Compose(
-		  [
-			  T.Resize(size, interpolation=T.InterpolationMode.BICUBIC),
-			  FlippingTransform(),
-			  Rotate90Transform(),
-			  T.RandomApply([blur_aug], p=0.1),
-			  #T.ToTensor(),
-			  #T.Normalize(mean=mean, std=std),
-		  ]
-	  )
-	
-	  if data_args.augmenter=="v1":
-		  transform_train= transform_v1
-	  elif data_args.augmenter=="v2":
-		  transform_train= transform_v2
-	  else:
-		  transform_train= transform_v1
-	
-	  transform_val = T.Compose(
-		  [
-			  T.Resize(size, interpolation=T.InterpolationMode.BICUBIC),
-			  #T.ToTensor(),
-			  #T.Normalize(mean=mean, std=std),
-		  ]
-	  )
+    transform_v1 = T.Compose(
+        [
+            T.Resize(size, interpolation=T.InterpolationMode.BICUBIC),
+            FlippingTransform(),
+            Rotate90Transform(),
+            #T.ToTensor(),
+            #T.Normalize(mean=mean, std=std),
+        ]
+    )
+
+    transform_v2 = T.Compose(
+        [
+            T.Resize(size, interpolation=T.InterpolationMode.BICUBIC),
+            FlippingTransform(),
+            Rotate90Transform(),
+            T.RandomApply([blur_aug], p=0.1),
+            #T.ToTensor(),
+            #T.Normalize(mean=mean, std=std),
+        ]
+    )
+
+    if data_args.augmenter=="v1":
+        transform_train= transform_v1
+    elif data_args.augmenter=="v2":
+        transform_train= transform_v2
+    else:
+        transform_train= transform_v1
+
+    transform_val = T.Compose(
+        [
+             T.Resize(size, interpolation=T.InterpolationMode.BICUBIC),
+             #T.ToTensor(),
+             #T.Normalize(mean=mean, std=std),
+        ]
+    )
     
     # *****************************************************
     # **        TORCH DATASET
     # *****************************************************
     dataset_train= PreTrainDataset(
         filename=data_args.train_dataset, 
-			  transform=transform_train, 
-			  load_as_gray=data_args.grayscale,
-			  apply_zscale=data_args.zscale,
-			  zscale_contrast=data_args.zscale_contrast,
-			  resize=data_args.resize,
-			  resize_size=data_args.resize_size,
-			  verbose=False
+        transform=transform_train, 
+        load_as_gray=data_args.grayscale,
+        apply_zscale=data_args.zscale,
+        zscale_contrast=data_args.zscale_contrast,
+        resize=data_args.resize,
+        resize_size=data_args.resize_size,
+        verbose=False
     )
     
     dataset_val= None
     if data_args.val_dataset:
         dataset_val= PreTrainDataset(
             filename=data_args.val_dataset, 
-			      transform=transform_val, 
-			      load_as_gray=data_args.grayscale,
-			      apply_zscale=data_args.zscale,
-			      zscale_contrast=data_args.zscale_contrast,
-			      resize=data_args.resize,
-			      resize_size=data_args.resize_size,
-			      verbose=False
+            transform=transform_val, 
+            load_as_gray=data_args.grayscale,
+            apply_zscale=data_args.zscale,
+            zscale_contrast=data_args.zscale_contrast,
+            resize=data_args.resize,
+            resize_size=data_args.resize_size,
+            verbose=False
         )
 
     # *****************************************************
