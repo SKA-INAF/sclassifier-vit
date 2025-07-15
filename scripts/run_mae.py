@@ -200,7 +200,26 @@ class ModelArguments:
     norm_pix_loss: bool = field(
         default=True, metadata={"help": "Whether or not to train with normalized pixel values as target."}
     )
-
+    
+    patch_size: int = field(
+        default=16, metadata={"help": "The size (resolution) of each patch."}
+    )
+    hidden_size: int = field(
+        default=768, metadata={"help": "Dimensionality of the encoder layers and the pooler layer: vits=384, vitb=768, vitl=1024."}
+    )
+    num_hidden_layers: int = field(
+        default=12, metadata={"help": "Number of hidden layers in the Transformer encoder: vits=12, vitb=12, vitb=24"}
+    )
+    num_attention_heads: int = field(
+        default=12, metadata={"help": "Number of attention heads for each attention layer in the Transformer encoder: vits=6, vitb=12, vitl=16."}
+    )
+    intermediate_size: int = field(
+        default=3072, metadata={"help": "Dimensionality of the intermediate (i.e., feed-forward) layer in the Transformer encoder: vits=1536, vitb=3072, vitl=4096"}
+    )
+    num_channels: int = field(
+        default=3, metadata={"help": "The number of input channels"}
+    )
+    
 ###############################
 ####    CUSTOM ARGUMENTS
 ###############################
@@ -409,15 +428,29 @@ def main():
             logger.info(f"Overriding config: {model_args.config_overrides}")
             config.update_from_string(model_args.config_overrides)
             logger.info(f"New config: {config}")
+         
+        # - Add architecture parameters   
+        config.update(
+            {
+                "patch_size": model_args.patch_size,
+                "hidden_size": model_args.hidden_size,
+                "num_hidden_layers": model_args.num_hidden_layers,
+                "num_attention_heads": model_args.num_attention_heads,
+                "intermediate_size": model_args.intermediate_size,
+                "num_channels": model_args.num_channels,
+                "image_size": data_args.resize_size,
+            }
+        )
 
     # adapt config
     config.update(
         {
             "mask_ratio": model_args.mask_ratio,
-            "norm_pix_loss": model_args.norm_pix_loss,
+            "norm_pix_loss": model_args.norm_pix_loss
         }
     )
-
+    
+    
     # create image processor
     if model_args.image_processor_name:
         image_processor = ViTImageProcessor.from_pretrained(model_args.image_processor_name, **config_kwargs)
