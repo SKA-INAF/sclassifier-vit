@@ -95,7 +95,6 @@ class DataTrainingArguments:
     )
     resize_size: Optional[int] = field(default=224, metadata={"help": "Resize size in pixels used if --resize option is enabled"})
 
-	
     #dataset_name: Optional[str] = field(
     #    default="cifar10", metadata={"help": "Name of a dataset from the datasets package"}
     #)
@@ -293,7 +292,7 @@ def main():
 
     transform_v1 = T.Compose(
         [
-            T.Resize(size, interpolation=T.InterpolationMode.BICUBIC),
+            T.Resize(data_args.resize_size, interpolation=T.InterpolationMode.BICUBIC),
             FlippingTransform(),
             Rotate90Transform(),
             #T.ToTensor(),
@@ -303,7 +302,7 @@ def main():
 
     transform_v2 = T.Compose(
         [
-            T.Resize(size, interpolation=T.InterpolationMode.BICUBIC),
+            T.Resize(data_args.resize_size, interpolation=T.InterpolationMode.BICUBIC),
             FlippingTransform(),
             Rotate90Transform(),
             T.RandomApply([blur_aug], p=0.1),
