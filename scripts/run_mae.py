@@ -323,7 +323,7 @@ def main():
     transform_v2 = T.Compose(
         [
             T.Resize(data_args.resize_size, interpolation=T.InterpolationMode.BICUBIC),
-            RandomResizedCrop(data_args.resize_size, scale=(0.5, 1.0), interpolation=InterpolationMode.BICUBIC),
+            RandomResizedCrop(data_args.resize_size, scale=(0.8, 1.0), interpolation=InterpolationMode.BICUBIC),
             FlippingTransform(),
             Rotate90Transform(),
             #T.RandomApply([blur_aug], p=0.1),
