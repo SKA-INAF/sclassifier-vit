@@ -194,7 +194,19 @@ class AstroImageDataset(Dataset):
 		verbose=False
 	):
 		self.filename= filename
-		self.datalist= read_datalist(filename)
+		self.filename_fullpath= os.path.abspath(self.filename)
+		self.filename_base= os.path.basename(self.filename_fullpath)
+		self.filename_base_noext= os.path.splitext(self.filename_base)[0]
+		self.filename_ext= os.path.splitext(self.filename_base)[1]
+		if self.filename_ext==".json":
+			self.datalist= read_datalist(filename)
+		elif self.filename_ext in {".fits", ".png", ".jpg", ".jpeg"}:
+			self.datalist= self._set_datalist_from_image(filename)
+		else:
+			err= f"Unknow/unsupported input file extension ({self.filename_ext})!"
+			logger.error(err)
+			raise RuntimeError(err)
+			
 		self.transform = transform
 		self.load_as_gray= load_as_gray
 		self.apply_zscale= apply_zscale
@@ -204,6 +216,22 @@ class AstroImageDataset(Dataset):
 		self.verbose= verbose
 		
 		self.pil2tensor = T.Compose([T.PILToTensor()])
+		
+	def _set_datalist_from_image(self, filename):
+		""" Set data list from input image """
+		
+		filename_fullpath= os.path.abspath(filename)
+		filename_base= os.path.basename(filename_fullpath)
+		filename_base_noext= os.path.splitext(filename_base)[0]
+		
+		datalist= [
+			{
+				"filepaths": [filename],
+				"sname": filename_base_noext
+			}
+		]
+		return datalist
+		
 		
 	def load_pil_image(self, idx):
 		""" Load image as PIL """	
@@ -532,7 +560,8 @@ class PreTrainDataset(AstroImageDataset):
 			zscale_contrast=0.25,
 			resize=False,
 			resize_size=224,
-			verbose=False
+			verbose=False,
+			return_dict=False
 		):
 		super().__init__(
 			filename, 
@@ -542,7 +571,8 @@ class PreTrainDataset(AstroImageDataset):
 			resize, resize_size,
 			verbose
 		)	
-		
+		self.return_dict= return_dict
+			
 	def __getitem__(self, idx):
 		""" Iterator providing training data (pixel_values + labels) """
 		
@@ -552,8 +582,11 @@ class PreTrainDataset(AstroImageDataset):
 		# - Get class ids (dummy)
 		#class_id= self.datalist[idx]['id']
 		
-		#return image_tensor
-		return {"image": image_tensor}
+		if self.return_dict:
+			return {"image": image_tensor}
+		else:
+			return image_tensor
+
 				
 def PreTrainDatasetGenerator(dataset: PreTrainDataset):
 	""" Generator to convert PyTorch to HuggingFace datasets """

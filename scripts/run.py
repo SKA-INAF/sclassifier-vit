@@ -77,7 +77,8 @@ def get_args():
 	parser = argparse.ArgumentParser(description="Parse args.")
 
 	# - Input options
-	parser.add_argument('-datalist','--datalist', dest='datalist', required=True, type=str, help='Input data json filelist') 
+	parser.add_argument('-inputfile','--inputfile', dest='inputfile', required=False, type=str, default="", help='Input image (FITS/PNG). Takes precedence over --datalist') 
+	parser.add_argument('-datalist','--datalist', dest='datalist', required=False, type=str, default="", help='Input data json filelist') 
 	parser.add_argument('-datalist_cv','--datalist_cv', dest='datalist_cv', required=False, default="", type=str, help='Input data json filelist for validation') 
 
 	# - Image pre-processing options
@@ -174,9 +175,18 @@ def main():
 		return 1
 
 	# - Read args
+	inputfile= args.inputfile
 	datalist= args.datalist
 	datalist_cv= args.datalist_cv
 	
+	if inputfile=="" and datalist=="":
+		logger.error("Empty inputfile and datalist args, you must provide at least one!")
+		return 1
+		
+	if inputfile!="":
+		logger.info(f"Overriding datalist with inputfile {inputfile} ...")
+		datalist= inputfile
+		
 	# - Run options
 	device_choice= args.device
 	device = torch.device(device_choice if torch.cuda.is_available() else "cpu")
