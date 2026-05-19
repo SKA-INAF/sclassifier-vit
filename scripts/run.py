@@ -153,6 +153,9 @@ def get_args():
 	parser.add_argument('-max_checkpoints', '--max_checkpoints', dest='max_checkpoints', required=False, type=int, default=1, action='store',help='Max number of saved checkpoints (default=1)')
 	parser.add_argument('-outfile','--outfile', dest='outfile', required=False, default="classifier_results.json", type=str, help='Output file with saved inference results') 
 	
+	parser.add_argument('--save_base_path', dest='save_base_path', action='store_true', help='Save input base filename in output json catalog rather than full path (default=save full path)')	
+	parser.set_defaults(save_base_path=False)
+	
 	args = parser.parse_args()	
 
 	return args		
@@ -201,6 +204,7 @@ def main():
 	verbose= args.verbose
 	
 	outfile= args.outfile
+	save_base_path= args.save_base_path
 	
 	# - Set model name
 	modelname= args.modelfile 
@@ -702,6 +706,25 @@ def main():
 			image_info= dataset.load_image_info(i)
 			sname= image_info["sname"]
 			
+			# - Modify filepath in output file
+			if "filepaths" in image_info:
+				if inputfile!="":
+					fname= image_info["filepaths"][0]
+					fname_base= os.path.basename(os.path.abspath(fname))
+					if save_base_path:	
+						del image_info["filepaths"]
+						image_info["filepath"]= fname_base
+					else:
+						del image_info["filepaths"]
+						image_info["filepath"]= fname
+				else:
+					if save_base_path:	
+						filepaths_mod= []
+						for fname in image_info["filepaths"]:
+							fname_base= os.path.basename(os.path.abspath(fname))
+							filepaths_mod.append(fname_base)
+						image_info["filepaths"]= filepaths_mod
+							
 			# - Load image & extract embeddings
 			#image= dataset.load_pil_image(i)
 			#pixel_values= processor(image, return_tensors="pt").pixel_values.to(device)
@@ -782,11 +805,17 @@ def main():
 					print(predicted_prob)
 			
 			inference_results["data"].append(image_info)
-			
+		
+		# - Remove "data" key for single-image input
+		if inputfile!="":
+			inference_out_data= inference_results["data"][0]
+		else:
+			inference_out_data= inference_results
+		
 		# - Save json file
 		logger.info("Saving inference results with prediction info to file %s ..." % (outfile))
 		with open(outfile, 'w') as fp:
-			json.dump(inference_results, fp, indent=2)
+			json.dump(inference_out_data, fp, indent=2)
 	
 	################################
 	##    TRAIN
