@@ -705,25 +705,6 @@ def main():
 			# - Retrieve image info
 			image_info= dataset.load_image_info(i)
 			sname= image_info["sname"]
-			
-			# - Modify filepath in output file
-			if "filepaths" in image_info:
-				if inputfile!="":
-					fname= image_info["filepaths"][0]
-					fname_base= os.path.basename(os.path.abspath(fname))
-					if save_base_path:	
-						del image_info["filepaths"]
-						image_info["filepath"]= fname_base
-					else:
-						del image_info["filepaths"]
-						image_info["filepath"]= fname
-				else:
-					if save_base_path:	
-						filepaths_mod= []
-						for fname in image_info["filepaths"]:
-							fname_base= os.path.basename(os.path.abspath(fname))
-							filepaths_mod.append(fname_base)
-						image_info["filepaths"]= filepaths_mod
 							
 			# - Load image & extract embeddings
 			#image= dataset.load_pil_image(i)
@@ -804,6 +785,27 @@ def main():
 					print("--> predicted probs")
 					print(predicted_prob)
 			
+			
+			# - Modify filepath in output file
+			if "filepaths" in image_info:
+				if inputfile!="":
+					fname= image_info["filepaths"][0]
+					fname_base= os.path.basename(os.path.abspath(fname))
+					if save_base_path:	
+						del image_info["filepaths"]
+						image_info["filepath"]= fname_base
+					else:
+						del image_info["filepaths"]
+						image_info["filepath"]= fname
+				else:
+					if save_base_path:	
+						filepaths_mod= []
+						for fname in image_info["filepaths"]:
+							fname_base= os.path.basename(os.path.abspath(fname))
+							filepaths_mod.append(fname_base)
+						image_info["filepaths"]= filepaths_mod
+			
+			# - Append inference data to list
 			inference_results["data"].append(image_info)
 		
 		# - Remove "data" key for single-image input
