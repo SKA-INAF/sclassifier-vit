@@ -368,20 +368,25 @@ def main():
 				
 				#if max_freeze_layer_id==-1 or (max_freeze_layer_id>=0 and layer_index!=-1 and layer_index<max_freeze_layer_id):
 				#	param.requires_grad = False
-
+		
 			# 4. Handle structural shortcuts for larger models (ResNet-50/101/152)
 			elif "shortcut" in name and model_type == "resnet":
 				match = re.search(r"stages\.(\d+)\.layers\.(\d+)", name)
 				print(f"--> shortcut: layer={name} (index={layer_index}), match={match} ...")
+				
 				if match:
-					# Find the sequential index of the first standard layer in this same block
+					# FIX: Format this to match the compressed registry keys (e.g., 's1_b0_l0')
 					companion_layer_key = f"s{match.group(1)}_b{match.group(2)}_l0"
-					# If that block was target-frozen, freeze the companion shortcut layer alongside it
-					if companion_layer_key in resnet_registry:
-						companion_idx = resnet_registry[companion_layer_key]
+        
+					# Search the registry values using the uniform key format
+					# If the key exists in our registry tracking table, pull its ID
+					registry_vals = [v for k, v in resnet_registry.items() if companion_layer_key in k or companion_layer_key == k]
+        
+					if registry_vals:
+						companion_idx = registry_vals[0]
 						if max_freeze_layer_id == -1 or max_freeze_layer_id > companion_idx:
-							print(f"--> Freezing shortcut backbone layer {name} (index={layer_index}) ...")
 							param.requires_grad = False
+							print(f"--> Freezing shortcut layer {name} (tracked to index={companion_idx}) ...")
 
 		# - Print resulting model		
 		logger.info("Print base model info ...")	
