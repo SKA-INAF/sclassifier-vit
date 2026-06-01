@@ -392,9 +392,11 @@ def main():
 	transf_list= []
 	
 	if args.add_center_crop_augm: # add CenterCrop
+		logger.info(f"Adding center crop augmentation (size={args.crop_size}) in train dataset ...")
 		transf_list.append(center_crop_aug)
 		
 	if args.add_rand_center_crop_augm: # add RandomCenterCrop
+		logger.info(f"Adding random center crop augmentation (min_frac={args.min_crop_fract}) in train dataset ...")
 		transf_list.append(rand_center_crop_aug)
 		
 	transf_list.extend(
@@ -406,6 +408,7 @@ def main():
 	)
 	
 	if args.add_blur_augm:
+		logger.info(f"Adding random blur augmentation (prob={args.blur_prob}) in train dataset ...")
 		transf_list.append(blur_aug)
 
 	transf_list.extend(
