@@ -172,7 +172,7 @@ def get_single_label_target_maps(schema="morph_tags"):
 			2: "PECULIAR"
 		}	
 		
-	elif schema=="rg-morph-binary":
+	elif schema=="rg_morph_binary":
 		id2target= {
 			1: 0, # FR-I
 			2: 1, # FR-II
