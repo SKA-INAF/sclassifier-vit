@@ -326,8 +326,17 @@ def main():
 	##################################
 	# - Create data transforms
 	logger.info("Creating data transforms ...")
-	#size = processor.size["height"]
-	size = (processor.size["height"], processor.size["width"])
+	
+	if "height" in processor.size and "width" in processor.size:
+		size = (processor.size["height"], processor.size["width"])
+		
+	elif "shortest_edge" in processor.size:
+		# Fallback for models using shortest_edge (squares like 224x224)
+		dim = processor.size["shortest_edge"]
+		size = (dim, dim)
+	else:
+		raise RuntimeError("Cannot find height/width or shortest_edge in processor, please check it!")
+	
 	mean = processor.image_mean
 	std = processor.image_std
 
