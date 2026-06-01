@@ -359,9 +359,11 @@ def main():
 			# - Freeze usign layer_id threshold
 			#layer_index= extract_layer_id_vit(name)
 			layer_index = extract_layer_id(name, model_type=model_type, resnet_registry=resnet_registry)
+			print(f"Backbone layer {name}: index={layer_index} ...")
 			
 			if layer_index != -1:
 				if max_freeze_layer_id == -1 or (max_freeze_layer_id >= 0 and layer_index < max_freeze_layer_id):
+					print(f"--> Freezing backbone layer {name} (index={layer_index}) ...")
 					param.requires_grad = False
 				
 				#if max_freeze_layer_id==-1 or (max_freeze_layer_id>=0 and layer_index!=-1 and layer_index<max_freeze_layer_id):
@@ -370,6 +372,7 @@ def main():
 			# 4. Handle structural shortcuts for larger models (ResNet-50/101/152)
 			elif "shortcut" in name and model_type == "resnet":
 				match = re.search(r"stages\.(\d+)\.layers\.(\d+)", name)
+				print(f"--> shortcut: layer={name} (index={layer_index}), match={match} ...")
 				if match:
 					# Find the sequential index of the first standard layer in this same block
 					companion_layer_key = f"s{match.group(1)}_b{match.group(2)}_l0"
@@ -377,6 +380,7 @@ def main():
 					if companion_layer_key in resnet_registry:
 						companion_idx = resnet_registry[companion_layer_key]
 						if max_freeze_layer_id == -1 or max_freeze_layer_id > companion_idx:
+							print(f"--> Freezing shortcut backbone layer {name} (index={layer_index}) ...")
 							param.requires_grad = False
 
 		# - Print resulting model		
