@@ -390,12 +390,12 @@ def main():
 		# - Print resulting model		
 		logger.info("Print base model info ...")	
 		for name, param in model.base_model.named_parameters():
-			logger.info("Layer {name} requires_grad? {param.requires_grad}")
+			logger.info(f"Layer {name} requires_grad? {param.requires_grad}")
 			#print(name, param.requires_grad)	
 				
 		logger.info("Print entire model info ...")
 		for name, param in model.named_parameters():
-			logger.info("Layer {name} requires_grad? {param.requires_grad}")
+			logger.info(f"Layer {name} requires_grad? {param.requires_grad}")
 			#print(name, param.requires_grad)	
 			
 	
