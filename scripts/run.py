@@ -350,7 +350,8 @@ def main():
 			# - Select encoder layers
 			is_backbone_layer = (
 				name.startswith("vision_model.encoder") or # VIT MODELS
-				name.startswith("encoder.stages")    # RESNET MODELS
+				name.startswith("encoder.stages") or # RESNET MODELS
+				name.startswith("embedder") # # RESNET MODELS (STEM)
 			)
 			
 			if not is_backbone_layer:
