@@ -273,13 +273,26 @@ def main():
 		)
 		
 	else:
-		model = AutoModelForImageClassification.from_pretrained(
-			modelname, 
-			problem_type="multi_label_classification" if multilabel else "single_label_classification", 
-			id2label=id2label, 
-			label2id=label2id,
-			num_labels=num_labels
-		)
+	
+		try:
+			model = AutoModelForImageClassification.from_pretrained(
+				modelname, 
+				problem_type="multi_label_classification" if multilabel else "single_label_classification", 
+				id2label=id2label, 
+				label2id=label2id,
+				num_labels=num_labels
+			)
+		except Exception as e:
+			logger.warning(f"Failed to load model {modelname} (err={str(e)}), retrying with ignore_mismatched_sizes=True ...")
+			model = AutoModelForImageClassification.from_pretrained(
+				modelname, 
+				problem_type="multi_label_classification" if multilabel else "single_label_classification", 
+				id2label=id2label, 
+				label2id=label2id,
+				num_labels=num_labels,
+				ignore_mismatched_sizes=True
+			)
+			
 		
 	model= model.to(device)
 	
