@@ -106,7 +106,8 @@ def build_resnet_layer_registry(model):
 		clean_name = name.replace("resnet.", "")
         
 		# 1. Stem
-		if "embedder.embedder.convolution" in clean_name:
+		#if "embedder.embedder.convolution" in clean_name:
+		if "embedder" in clean_name:
 			layer_key = "stem"
 			if layer_key not in seen_layers:
 				seen_layers.append(layer_key)
