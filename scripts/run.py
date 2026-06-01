@@ -339,36 +339,21 @@ def main():
 	
 	mean = processor.image_mean
 	std = processor.image_std
-
-	print("*** Image processor config pars ***")
-	if "do_resize" in processor:
-		print("do_resize? ", (processor.do_resize))
-	else:
-		print("do_resize? N/A")
-		
-	print("size: ", (size))
+	do_resize= getattr(processor, "do_resize", None)
+	do_rescale= getattr(processor, "do_rescale", None)
+	rescale_factor= getattr(processor, "rescale_factor", None)
+	do_normalize= getattr(processor, "do_normalize", None)
+	do_convert_rgb= getattr(processor, "do_convert_rgb", None)
 	
-	if "do_rescale" in processor:
-		print("do_rescale? ", (processor.do_rescale))
-	else:
-		print("do_rescale? N/A")
-		
-	if "rescale_factor" in processor:
-		print("rescale_factor: ", (processor.rescale_factor))
-	else:
-		print("rescale_factor: N/A")
-		
-	if "do_normalize" in processor:
-		print("do_normalize? ", (processor.do_normalize))
-	else:
-		print("do_normalize? N/A")
-		
+	print("*** Image processor config pars ***")
+	print(f"do_resize? {do_resize}")
+	print("size: ", (size))
+	print(f"do_rescale? {do_rescale}")
+	print(f"rescale_factor: {rescale_factor}")
+	print(f"do_normalize? {do_normalize}")
 	print("mean: ", (mean))
 	print("std: ", (std))
-	if "do_convert_rgb" in processor:
-		print("do_convert_rgb? ", (processor.do_convert_rgb))
-	else:
-		print("do_convert_rgb? N/A")
+	print(f"do_convert_rgb? {do_convert_rgb}")
 		
 	mean= [0.,0.,0.]
 	std= [1.,1.,1.]
