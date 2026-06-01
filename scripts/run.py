@@ -919,7 +919,7 @@ def main():
 				logger.warning("Skip None tensor at index %d ..." % (i))
 				continue
 				
-			image_tensor= image_tensor.unsqueeze(0).to(device)
+			image_tensor= image_tensor.to(device)
 				
 			if args.cast_to_float:
 				image_tensor= image_tensor.float()
@@ -929,12 +929,18 @@ def main():
 			print(image_tensor.shape)
 			
 			# - Convert to numpy
-			image_npy= image_tensor.cpu().detach().numpy()
+			print(f"--> image_npy no. {i+1} ({sname}) ...")
+			image_npy= image_tensor.cpu().detach().permute(1, 2, 0).numpy()
 			print("image_npy.shape")
 			print(image_npy.shape)
+			print("image_npy min/max")
+			print(image_npy.min())
+			print(image_npy.max())
 			
 			# - Plot image
-			# ...
+			print(f"--> Plotting image_npy no. {i+1} ({sname}) ...")
+			plt.imshow(image_npy, cmap="inferno")
+			plt.show()
 
 	################################
 	##    TRAIN
