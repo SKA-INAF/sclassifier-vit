@@ -348,18 +348,38 @@ def main():
 		# 3. Freeze layers
 		for name, param in model.base_model.named_parameters():
 			# - Select encoder layers
-			is_encoder_layer = (
+			is_backbone_layer = (
 				name.startswith("vision_model.encoder") or # VIT MODELS
 				name.startswith("encoder.stages")    # RESNET MODELS
 			)
 			
-			if is_encoder_layer:
-				#layer_index= extract_layer_id_vit(name)
-				layer_index = extract_layer_id(name, model_type=model_type, resnet_registry=resnet_registry)
-				
-				if max_freeze_layer_id==-1 or (max_freeze_layer_id>=0 and layer_index!=-1 and layer_index<max_freeze_layer_id):
+			if not is_backbone_layer:
+				continue
+			
+			# - Freeze usign layer_id threshold
+			#layer_index= extract_layer_id_vit(name)
+			layer_index = extract_layer_id(name, model_type=model_type, resnet_registry=resnet_registry)
+			
+			if layer_index != -1:
+				if max_freeze_layer_id == -1 or (max_freeze_layer_id >= 0 and layer_index < max_freeze_layer_id):
 					param.requires_grad = False
-		
+				
+				#if max_freeze_layer_id==-1 or (max_freeze_layer_id>=0 and layer_index!=-1 and layer_index<max_freeze_layer_id):
+				#	param.requires_grad = False
+
+			# 4. Handle structural shortcuts for larger models (ResNet-50/101/152)
+			elif "shortcut" in name and model_type == "resnet":
+				match = re.search(r"stages\.(\d+)\.layers\.(\d+)", name)
+				if match:
+					# Find the sequential index of the first standard layer in this same block
+					companion_layer_key = f"s{match.group(1)}_b{match.group(2)}_l0"
+					# If that block was target-frozen, freeze the companion shortcut layer alongside it
+					if companion_layer_key in resnet_registry:
+						companion_idx = resnet_registry[companion_layer_key]
+						if max_freeze_layer_id == -1 or max_freeze_layer_id > companion_idx:
+							param.requires_grad = False
+
+		# - Print resulting model		
 		logger.info("Print base model info ...")	
 		for name, param in model.base_model.named_parameters():
 			print(name, param.requires_grad)	
@@ -368,7 +388,7 @@ def main():
 		for name, param in model.named_parameters():
 			print(name, param.requires_grad)	
 	
- 	##################################
+	##################################
 	##     DATA TRANSFORMS
 	##################################
 	# - Create data transforms
