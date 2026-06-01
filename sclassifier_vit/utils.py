@@ -60,13 +60,30 @@ def read_datalist(filename, key="data"):
 ##########################
 ##    MODEL UTILS
 ##########################
+#def extract_layer_id_vit(name: str) -> int:
+#  """ Extract layer id from vision encoder layer name """ 
+#  match = re.search(r'\.layers\.(\d+)\.', name)
+#  if not match:
+#    logger.warning(f"No '.layers.<id>.' pattern found in: {name}")
+#    return -1
+#  return int(match.group(1))
+
 def extract_layer_id_vit(name: str) -> int:
-  """ Extract layer id from vision encoder layer name """ 
-  match = re.search(r'\.layers\.(\d+)\.', name)
-  if not match:
-    logger.warning(f"No '.layers.<id>.' pattern found in: {name}")
-    return -1
-  return int(match.group(1))
+	""" Extract layer id from vision encoder layer name """ 
+    
+	# 1. Catch the patch and position embeddings (The ViT "Stem")
+	if "embeddings" in name:
+		return 0
+
+	# 2. Catch the transformer encoder blocks
+	match = re.search(r'\.layers\.(\d+)\.', name)
+	if match:
+		# Shift the index by +1 so encoder.layers.0 becomes index 1.
+		# This prevents it from colliding with the embeddings at index 0.
+		return int(match.group(1)) + 1
+
+	logger.warning(f"No valid layer ID '.layers.<id>.' found in: {name}")
+	return -1
 
 
 def extract_layer_id(
