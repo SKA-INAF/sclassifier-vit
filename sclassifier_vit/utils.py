@@ -52,110 +52,110 @@ from sclassifier_vit import logger
 ##    DATA UTILS
 ##########################
 def read_datalist(filename, key="data"):
-	""" Read data json file """
-	f= open(filename, "r")
-	datalist= json.load(f)[key]
-	return datalist
+  """ Read data json file """
+  f= open(filename, "r")
+  datalist= json.load(f)[key]
+  return datalist
   
 def extract_layer_id(name: str) -> int:
-	""" Extract layer id from vision encoder layer name """ 
-	match = re.search(r'\.layers\.(\d+)\.', name)
-	if not match:
-		logger.warning(f"No '.layers.<id>.' pattern found in: {name}")
-		return -1
-	return int(match.group(1))
+  """ Extract layer id from vision encoder layer name """ 
+  match = re.search(r'\.layers\.(\d+)\.', name)
+  if not match:
+    logger.warning(f"No '.layers.<id>.' pattern found in: {name}")
+    return -1
+  return int(match.group(1))
   
 ##########################
 ##   IMAGE PROC UTILS
 ##########################
 def strip_deg_axis_from_header(header):
-	""" Remove references to 3rd & 4th axis from FITS header """
-	
-	# - Remove 3rd axis
-	if 'NAXIS3' in header:
-		del header['NAXIS3']
-	if 'CTYPE3' in header:
-		del header['CTYPE3']
-	if 'CRVAL3' in header:
-		del header['CRVAL3']
-	if 'CDELT3' in header:
-		del header['CDELT3']
-	if 'CRPIX3' in header:
-		del header['CRPIX3']
-	if 'CUNIT3' in header:
-		del header['CUNIT3']
-	if 'CROTA3' in header:
-		del header['CROTA3']
-	if 'PC1_3' in header:
-		del header['PC1_3']
-	if 'PC01_03' in header:
-		del header['PC01_03']
-	if 'PC2_3' in header:
-		del header['PC2_3']
-	if 'PC02_03' in header:
-		del header['PC02_03']
-	if 'PC3_1' in header:
-		del header['PC3_1']
-	if 'PC03_01' in header:
-		del header['PC03_01']
-	if 'PC3_2' in header:
-		del header['PC3_2']
-	if 'PC03_02' in header:
-		del header['PC03_02']
-	if 'PC3_3' in header:
-		del header['PC3_3']
-	if 'PC03_03' in header:
-		del header['PC03_03']
+  """ Remove references to 3rd & 4th axis from FITS header """
 
-	# - Remove 4th axis
-	if 'NAXIS4' in header:
-		del header['NAXIS4']
-	if 'CTYPE4' in header:
-		del header['CTYPE4']
-	if 'CRVAL4' in header:
-		del header['CRVAL4']
-	if 'CDELT4' in header:
-		del header['CDELT4']
-	if 'CRPIX4' in header:
-		del header['CRPIX4']
-	if 'CUNIT4' in header:
-		del header['CUNIT4']
-	if 'CROTA4' in header:
-		del header['CROTA4']
-	if 'PC1_4' in header:
-		del header['PC1_4']
-	if 'PC01_04' in header:
-		del header['PC01_04']
-	if 'PC2_4' in header:
-		del header['PC2_4']
-	if 'PC02_04' in header:
-		del header['PC02_04']
-	if 'PC3_4' in header:
-		del header['PC3_4']
-	if 'PC03_04' in header:
-		del header['PC03_04']
-	if 'PC4_1' in header:
-		del header['PC4_1']
-	if 'PC04_01' in header:
-		del header['PC04_01']
-	if 'PC4_2' in header:
-		del header['PC4_2']
-	if 'PC04_02' in header:
-		del header['PC04_02']
-	if 'PC4_3' in header:
-		del header['PC4_3']
-	if 'PC04_03' in header:
-		del header['PC04_03']
-	if 'PC4_4' in header:
-		del header['PC4_4']
-	if 'PC04_04' in header:
-		del header['PC04_04']
+  # - Remove 3rd axis
+  if 'NAXIS3' in header:
+    del header['NAXIS3']
+  if 'CTYPE3' in header:
+    del header['CTYPE3']
+  if 'CRVAL3' in header:
+    del header['CRVAL3']
+  if 'CDELT3' in header:
+    del header['CDELT3']
+  if 'CRPIX3' in header:
+    del header['CRPIX3']
+  if 'CUNIT3' in header:
+    del header['CUNIT3']
+  if 'CROTA3' in header:
+    del header['CROTA3']
+  if 'PC1_3' in header:
+    del header['PC1_3']
+  if 'PC01_03' in header:
+    del header['PC01_03']
+  if 'PC2_3' in header:
+    del header['PC2_3']
+  if 'PC02_03' in header:
+    del header['PC02_03']
+  if 'PC3_1' in header:
+    del header['PC3_1']
+  if 'PC03_01' in header:
+    del header['PC03_01']
+  if 'PC3_2' in header:
+    del header['PC3_2']
+  if 'PC03_02' in header:
+    del header['PC03_02']
+  if 'PC3_3' in header:
+    del header['PC3_3']
+  if 'PC03_03' in header:
+    del header['PC03_03']
 
-	# - Set naxis to 2
-	header['NAXIS']= 2
-	
-	return header	
-	
+  # - Remove 4th axis
+  if 'NAXIS4' in header:
+    del header['NAXIS4']
+  if 'CTYPE4' in header:
+    del header['CTYPE4']
+  if 'CRVAL4' in header:
+    del header['CRVAL4']
+  if 'CDELT4' in header:
+    del header['CDELT4']
+  if 'CRPIX4' in header:
+    del header['CRPIX4']
+  if 'CUNIT4' in header:
+    del header['CUNIT4']
+  if 'CROTA4' in header:
+    del header['CROTA4']
+  if 'PC1_4' in header:
+    del header['PC1_4']
+  if 'PC01_04' in header:
+    del header['PC01_04']
+  if 'PC2_4' in header:
+    del header['PC2_4']
+  if 'PC02_04' in header:
+    del header['PC02_04']
+  if 'PC3_4' in header:
+    del header['PC3_4']
+  if 'PC03_04' in header:
+    del header['PC03_04']
+  if 'PC4_1' in header:
+    del header['PC4_1']
+  if 'PC04_01' in header:
+    del header['PC04_01']
+  if 'PC4_2' in header:
+    del header['PC4_2']
+  if 'PC04_02' in header:
+    del header['PC04_02']
+  if 'PC4_3' in header:
+    del header['PC4_3']
+  if 'PC04_03' in header:
+    del header['PC04_03']
+  if 'PC4_4' in header:
+    del header['PC4_4']
+  if 'PC04_04' in header:
+    del header['PC04_04']
+
+  # - Set naxis to 2
+  header['NAXIS']= 2
+
+  return header
+
 def resize_img(
   image,
   min_dim=None, max_dim=None, min_scale=None,
@@ -283,42 +283,42 @@ def resize_img(
   return image.astype(image_dtype)
   
 def get_clipped_data(data, sigma_low=5, sigma_up=30):
-	""" Apply sigma clipping to input data and return transformed data """
+  """ Apply sigma clipping to input data and return transformed data """
 
-	# - Find NaNs pixels
-	cond= np.logical_and(data!=0, np.isfinite(data))
-	data_1d= data[cond]
+  # - Find NaNs pixels
+  cond= np.logical_and(data!=0, np.isfinite(data))
+  data_1d= data[cond]
 
-	# - Clip all pixels that are below sigma clip
-	res= sigma_clip(data_1d, sigma_lower=sigma_low, sigma_upper=sigma_up, masked=True, return_bounds=True)
-	thr_low= res[1]
-	thr_up= res[2]
+  # - Clip all pixels that are below sigma clip
+  res= sigma_clip(data_1d, sigma_lower=sigma_low, sigma_upper=sigma_up, masked=True, return_bounds=True)
+  thr_low= res[1]
+  thr_up= res[2]
 
-	data_clipped= np.copy(data)
-	data_clipped[data_clipped<thr_low]= thr_low
-	data_clipped[data_clipped>thr_up]= thr_up
+  data_clipped= np.copy(data)
+  data_clipped[data_clipped<thr_low]= thr_low
+  data_clipped[data_clipped>thr_up]= thr_up
 
-	# - Set NaNs to 0
-	data_clipped[~cond]= 0
+  # - Set NaNs to 0
+  data_clipped[~cond]= 0
 
-	return data_clipped
-	
-	
+  return data_clipped
+
+
 def get_zscaled_data(data, contrast=0.25):
-	""" Apply sigma clipping to input data and return transformed data """
+  """ Apply sigma clipping to input data and return transformed data """
 
-	# - Find NaNs pixels
-	cond= np.logical_and(data!=0, np.isfinite(data))
+  # - Find NaNs pixels
+  cond= np.logical_and(data!=0, np.isfinite(data))
 
-	# - Apply zscale transform
-	transform= ZScaleInterval(contrast=contrast)
-	data_transf= transform(data)	
+  # - Apply zscale transform
+  transform= ZScaleInterval(contrast=contrast)
+  data_transf= transform(data)
 
-	# - Set NaNs to 0
-	data_transf[~cond]= 0
+  # - Set NaNs to 0
+  data_transf[~cond]= 0
 
-	return data_transf
-	
+  return data_transf
+
 def transform_img(data, nchans=1, norm_range=(0.,1.), resize=False, resize_size=224, apply_zscale=True, contrast=0.25, to_uint8=False, set_nans_to_min=False, verbose=False):
   """ Transform input image data and return transformed data """
 
@@ -343,11 +343,17 @@ def transform_img(data, nchans=1, norm_range=(0.,1.), resize=False, resize_size=
     print(data_transf.min())
     print(data_transf.max())
 
-	# - Apply zscale stretch?
+  # - Apply zscale stretch?
   if apply_zscale:
     transform= ZScaleInterval(contrast=contrast)
     data_zscaled= transform(data_transf)
     data_transf= data_zscaled
+    
+    if verbose:
+      print("== DATA MIN/MAX (AFTER ZSCALE TRANSFORM) ==")
+      print(data_transf.shape)
+      print(data_transf.min())
+      print(data_transf.max())
 
   # - Resize image?
   if resize:
@@ -361,11 +367,11 @@ def transform_img(data, nchans=1, norm_range=(0.,1.), resize=False, resize_size=
       anti_aliasing=False
     )
 
-  if verbose:
-    print("== DATA MIN/MAX (AFTER TRANSFORM) ==")
-    print(data_transf.shape)
-    print(data_transf.min())
-    print(data_transf.max())
+    if verbose:
+      print("== DATA MIN/MAX (AFTER RESIZING) ==")
+      print(data_transf.shape)
+      print(data_transf.min())
+      print(data_transf.max())
 
   # - Apply min/max normalization
   data_min= data_transf.min()
@@ -376,7 +382,7 @@ def transform_img(data, nchans=1, norm_range=(0.,1.), resize=False, resize_size=
   data_transf= data_norm
 
   if verbose:
-    print("== DATA MIN/MAX (AFTER TRANSFORM) ==")
+    print("== DATA MIN/MAX (AFTER MIN/MAX NORM TRANSFORM) ==")
     print(data_transf.shape)
     print(data_transf.min())
     print(data_transf.max())
@@ -387,7 +393,7 @@ def transform_img(data, nchans=1, norm_range=(0.,1.), resize=False, resize_size=
     data_transf= np.stack((data_transf,) * nchans, axis=-1)
     
   # - For 3D data, check number of channels, eventually copying last channel in new ones
-  if ndim==3:  	
+  if ndim==3:
     nchans_curr= data_transf.shape[-1]
 
     if nchans_curr!=nchans:
@@ -399,11 +405,11 @@ def transform_img(data, nchans=1, norm_range=(0.,1.), resize=False, resize_size=
           if i<nchans_curr:
             data_resized[:,:,i]= data_transf[:,:,i]
           else:
-            data_resized[:,:,i]= data_transf[:,:,nchans_curr-1]	
+            data_resized[:,:,i]= data_transf[:,:,nchans_curr-1]
       else:
         for i in range(nchans):
           data_resized[:,:,i]= data_transf[:,:,i]
-			
+
       data_transf= data_resized
 
   # - Convert to uint8
