@@ -482,7 +482,8 @@ def main():
 				apply_zscale=args.zscale, zscale_contrast=args.zscale_contrast,
 				resize=args.resize, resize_size=args.resize_size,
 				nclasses=nclasses,
-				id2target=id2target
+				id2target=id2target,
+				verbose=verbose,
 			)
 		else:
 			logger.info("Create dataset for prediction/test (single-label classification) ...")
@@ -493,7 +494,8 @@ def main():
 				apply_zscale=args.zscale, zscale_contrast=args.zscale_contrast,
 				resize=args.resize, resize_size=args.resize_size,
 				nclasses=nclasses,
-				id2target=id2target
+				id2target=id2target,
+				verbose=verbose,
 			)
 		nsamples= dataset.get_sample_size()
 	
@@ -508,7 +510,8 @@ def main():
 				apply_zscale=args.zscale, zscale_contrast=args.zscale_contrast,
 				resize=args.resize, resize_size=args.resize_size,
 				nclasses=nclasses,
-				id2target=id2target
+				id2target=id2target,
+				verbose=verbose,
 			)
 		else:
 			logger.info("Create train dataset (single-label classification) ...")
@@ -519,7 +522,8 @@ def main():
 				apply_zscale=args.zscale, zscale_contrast=args.zscale_contrast,
 				resize=args.resize, resize_size=args.resize_size,
 				nclasses=nclasses,
-				id2target=id2target
+				id2target=id2target,
+				verbose=verbose,
 			)
 		nsamples= dataset.get_sample_size()
 		
@@ -534,7 +538,8 @@ def main():
 					apply_zscale=args.zscale, zscale_contrast=args.zscale_contrast,
 					resize=args.resize, resize_size=args.resize_size,
 					nclasses=nclasses,
-					id2target=id2target
+					id2target=id2target,
+					verbose=verbose,
 				)
 			else:
 				logger.info("Create val dataset (single-label classification) ...")
@@ -545,7 +550,8 @@ def main():
 					apply_zscale=args.zscale, zscale_contrast=args.zscale_contrast,
 					resize=args.resize, resize_size=args.resize_size,
 					nclasses=nclasses,
-					id2target=id2target
+					id2target=id2target,
+					verbose=verbose,
 				)
 			nsamples_cv= dataset_cv.get_sample_size()
  
