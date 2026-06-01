@@ -93,33 +93,35 @@ def extract_layer_id(
   
 def build_resnet_layer_registry(model):
 	"""
-	Scans any Hugging Face ResNet variant dynamically and returns a dictionary 
-	mapping every parameter layer path to a unique, continuous sequential index (0 to N).
+	Builds a sequential layer map. It automatically strips any global 'resnet.' 
+	prefixes so the keys always match exactly what your loop sees.
 	"""
 	registry = {}
-    
+	
 	# Track unique sequential layers seen
 	seen_layers = []
     
 	for name, _ in model.named_parameters():
+		# Strip 'resnet.' if it exists to keep paths clean and uniform
+		clean_name = name.replace("resnet.", "")
+        
 		# 1. Stem
-		if "embedder.embedder.convolution" in name:
+		if "embedder.embedder.convolution" in clean_name:
 			layer_key = "stem"
 			if layer_key not in seen_layers:
 				seen_layers.append(layer_key)
-			registry[name] = seen_layers.index(layer_key)
-            
+			registry[clean_name] = seen_layers.index(layer_key)
+     
 		# 2. Backbone Convolutions (Ignores shortcut paths to keep linear depth clean)
-		elif "encoder.stages" in name and "layer." in name and "shortcut" not in name:
-			match = re.search(r"stages\.(\d+)\.layers\.(\d+)\.layer\.(\d+)", name)
+		elif "encoder.stages" in clean_name and "layer." in clean_name and "shortcut" not in clean_name:
+			match = re.search(r"stages\.(\d+)\.layers\.(\d+)\.layer\.(\d+)", clean_name)
 			if match:
-				# Creates a unique identifier string for this exact convolution block
 				layer_key = f"s{match.group(1)}_b{match.group(2)}_l{match.group(3)}"
 				if layer_key not in seen_layers:
 					seen_layers.append(layer_key)
-				registry[name] = seen_layers.index(layer_key)
-                
-		# 3. Head Classifier
+				registry[clean_name] = seen_layers.index(layer_key)
+                           
+		# 3. Head Classifier (NB: keep name here, not clean_name)
 		elif "classifier" in name:
 			layer_key = "classifier"
 			if layer_key not in seen_layers:
