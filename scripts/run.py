@@ -129,7 +129,7 @@ def get_args():
 	
 	parser.add_argument('--drop_last', dest='drop_last', action='store_true',help='Drop last incomplete batch (default=false)')	
 	parser.set_defaults(drop_last=False)
-	
+	parser.add_argument('-weight_decay','--weight_decay', dest='weight_decay', type=float, default=0.0, help='AdamW weight decay (default=0.0)')
 	
 	#parser.add_argument('--use_warmup_lr_schedule', dest='use_warmup_lr_schedule', action='store_true',help='Use linear warmup+cos decay schedule to update learning rate (default=false)')	
 	#parser.set_defaults(use_warmup_lr_schedule=False)
@@ -659,6 +659,7 @@ def main():
 		#disable_tqdm=True,
 		run_name=run_name,
     report_to=args.report_to,  # enable logging to W&B
+    weight_decay=args.weight_decay,
 	)
 	
 	# - Set optimizer
