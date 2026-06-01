@@ -141,10 +141,6 @@ class RandomCenterCrop(torch.nn.Module):
 ##########################################
 ##     MinMaxNormalization transform
 ##########################################
-import torch
-import torchvision.transforms.functional as F
-from typing import Union, Optional
-
 class MinMaxNormalization(torch.nn.Module):
 	"""
 		Min-max normalization scaling an image to [norm_min, norm_max].
@@ -160,7 +156,7 @@ class MinMaxNormalization(torch.nn.Module):
 		sanitize_tensor: bool = True
 	):
 		super().__init__()
-  	assert norm_min < norm_max, "norm_min must be strictly less than norm_max."
+		assert norm_min < norm_max, "norm_min must be strictly less than norm_max."
 		self.norm_min = float(norm_min)
 		self.norm_max = float(norm_max)
 		self.eps = float(eps)
