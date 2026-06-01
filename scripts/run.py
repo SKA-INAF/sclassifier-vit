@@ -509,9 +509,8 @@ def main():
 			pixel_values.append(item[0])
 			labels.append(item[1])
 			
-		#pixel_values = torch.stack([item[0] for item in batch])
-		#labels = torch.stack([item[1] for item in batch])
-		pixel_values= torch.stack(pixel_values)
+		#pixel_values= torch.stack(pixel_values)
+		pixel_values= torch.stack(pixel_values).float()
 		labels= torch.stack(labels)
 		return {"pixel_values": pixel_values, "labels": labels}
 
