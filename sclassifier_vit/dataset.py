@@ -172,6 +172,17 @@ def get_single_label_target_maps(schema="morph_tags"):
 			2: "PECULIAR"
 		}	
 		
+	elif schema=="rg-morph-binary":
+		id2target= {
+			1: 0, # FR-I
+			2: 1, # FR-II
+		}
+			
+		id2label= {
+			0: "FR-I",
+			1: "FR-II",
+		}
+		
 	# - Compute reverse dict
 	label2id= {v: k for k, v in id2label.items()}
 	
