@@ -15,6 +15,15 @@ from typing import List, Tuple, Sequence, Union, Optional
 # - TORCH
 import torch
 import torchvision.transforms.functional as TF
+import torchvision.transforms as T
+from torchvision.transforms import InterpolationMode
+
+PILImageTypes = tuple()  # filled lazily to avoid hard PIL dependency at import
+try:
+	from PIL import Image
+	PILImageTypes = (Image.Image,)
+except Exception:
+	pass
 
 ##########################################
 ##    FlippingTransform
