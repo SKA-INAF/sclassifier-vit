@@ -57,13 +57,76 @@ def read_datalist(filename, key="data"):
   datalist= json.load(f)[key]
   return datalist
   
-def extract_layer_id(name: str) -> int:
+##########################
+##    MODEL UTILS
+##########################
+def extract_layer_id_vit(name: str) -> int:
   """ Extract layer id from vision encoder layer name """ 
   match = re.search(r'\.layers\.(\d+)\.', name)
   if not match:
     logger.warning(f"No '.layers.<id>.' pattern found in: {name}")
     return -1
   return int(match.group(1))
+
+
+def extract_layer_id(
+	name: str, 
+	model_type: str = "vit", 
+	resnet_registry: dict = None
+) -> int:
+	"""
+	Extracts layer ID from model parameter names.
+	Supports ViT (0-11) and ANY ResNet variant dynamically via a structural registry.
+	"""
+
+	# --- ViT ---
+	if "vit" in model_type.lower():
+  	return extract_layer_id_vit(name)
+
+	# --- ResNet Multi-Version Pipeline ---
+	if "resnet" in model_type.lower():
+		if resnet_registry and name in resnet_registry:
+			return resnet_registry[name]
+		return -1
+
+	return -1  
+  
+def build_resnet_layer_registry(model):
+	"""
+	Scans any Hugging Face ResNet variant dynamically and returns a dictionary 
+	mapping every parameter layer path to a unique, continuous sequential index (0 to N).
+	"""
+	registry = {}
+    
+	# Track unique sequential layers seen
+	seen_layers = []
+    
+	for name, _ in model.named_parameters():
+		# 1. Stem
+		if "embedder.embedder.convolution" in name:
+			layer_key = "stem"
+			if layer_key not in seen_layers:
+				seen_layers.append(layer_key)
+			registry[name] = seen_layers.index(layer_key)
+            
+		# 2. Backbone Convolutions (Ignores shortcut paths to keep linear depth clean)
+		elif "encoder.stages" in name and "layer." in name and "shortcut" not in name:
+			match = re.search(r"stages\.(\d+)\.layers\.(\d+)\.layer\.(\d+)", name)
+			if match:
+				# Creates a unique identifier string for this exact convolution block
+				layer_key = f"s{match.group(1)}_b{match.group(2)}_l{match.group(3)}"
+				if layer_key not in seen_layers:
+					seen_layers.append(layer_key)
+				registry[name] = seen_layers.index(layer_key)
+                
+		# 3. Head Classifier
+		elif "classifier" in name:
+			layer_key = "classifier"
+			if layer_key not in seen_layers:
+				seen_layers.append(layer_key)
+			registry[name] = seen_layers.index(layer_key)
+            
+	return registry  
   
 ##########################
 ##   IMAGE PROC UTILS

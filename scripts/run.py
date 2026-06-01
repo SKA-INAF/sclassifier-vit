@@ -338,10 +338,25 @@ def main():
  	# - Freeze backbone?
 	if freeze_backbone:
 		logger.info("Freezing base layers ...")
-		##for param in model.base_model.parameters():
-		for name, param in model.base_model.named_parameters():	
-			if name.startswith("vision_model.encoder"):
-				layer_index= extract_layer_id(name)
+		
+		# 1. Check model type
+		model_type = "resnet" if "ResNet" in type(model).__name__ else "vit"
+		
+		# 2. Build the ResNet map dynamically if needed
+		resnet_registry = build_resnet_layer_registry(model) if model_type == "resnet" else None
+		
+		# 3. Freeze layers
+		for name, param in model.base_model.named_parameters():
+			# - Select encoder layers
+			is_encoder_layer = (
+				name.startswith("vision_model.encoder") or # VIT MODELS
+				name.startswith("encoder.stages")    # RESNET MODELS
+			)
+			
+			if is_encoder_layer:
+				#layer_index= extract_layer_id_vit(name)
+				layer_index = extract_layer_id(name, model_type=model_type, resnet_registry=resnet_registry)
+				
 				if max_freeze_layer_id==-1 or (max_freeze_layer_id>=0 and layer_index!=-1 and layer_index<max_freeze_layer_id):
 					param.requires_grad = False
 		
