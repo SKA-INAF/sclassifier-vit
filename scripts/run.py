@@ -101,6 +101,10 @@ def get_args():
 	parser.add_argument('--no_cast_to_float', dest='cast_to_float', action='store_false', help='Do not cast input pixel_values to float in collate (default=cast)')
 	parser.set_defaults(cast_to_float=True)
 	
+	parser.add_argument('--reset_meanstd', dest='reset_meanstd', action='store_true', help='Reset mean/std parameters used in image processor (default=reset to mean=0, std=1)')
+	parser.add_argument('--no_reset_meanstd', dest='reset_meanstd', action='store_false', help='Leave mean/std parameters set as provided in image processor (default=reset to mean=0, std=1)')
+	parser.set_defaults(reset_meanstd=True)
+	
 	# - Model options
 	parser.add_argument('--predict', dest='predict', action='store_true', help='Predict model on input data (default=false)')	
 	parser.set_defaults(predict=False)
@@ -365,27 +369,34 @@ def main():
 	else:
 		raise RuntimeError("Cannot find height/width or shortest_edge in processor, please check it!")
 	
-	mean = processor.image_mean
-	std = processor.image_std
+	mean_proc = processor.image_mean
+	std_proc = processor.image_std
 	do_resize= getattr(processor, "do_resize", None)
 	do_rescale= getattr(processor, "do_rescale", None)
 	rescale_factor= getattr(processor, "rescale_factor", None)
 	do_normalize= getattr(processor, "do_normalize", None)
 	do_convert_rgb= getattr(processor, "do_convert_rgb", None)
-	
+	mean_reset= [0.,0.,0.]
+	std_reset= [1.,1.,1.]
+	if args.reset_meanstd:
+		mean= mean_reset
+		std= std_reset
+	else:
+		mean= mean_proc
+		std= std_proc
+		
 	print("*** Image processor config pars ***")
 	print(f"do_resize? {do_resize}")
 	print("size: ", (size))
 	print(f"do_rescale? {do_rescale}")
 	print(f"rescale_factor: {rescale_factor}")
 	print(f"do_normalize? {do_normalize}")
+	print("mean_proc: ", (mean_proc))
+	print("std_proc: ", (std_proc))
 	print("mean: ", (mean))
 	print("std: ", (std))
 	print(f"do_convert_rgb? {do_convert_rgb}")
 		
-	mean= [0.,0.,0.]
-	std= [1.,1.,1.]
-
 	sigma_min= 1.0
 	sigma_max= 3.0
 	ksize= 3.3 * sigma_max
