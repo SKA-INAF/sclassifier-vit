@@ -81,7 +81,7 @@ def extract_layer_id(
 
 	# --- ViT ---
 	if "vit" in model_type.lower():
-  	return extract_layer_id_vit(name)
+		return extract_layer_id_vit(name)
 
 	# --- ResNet Multi-Version Pipeline ---
 	if "resnet" in model_type.lower():
