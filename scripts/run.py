@@ -46,7 +46,7 @@ from sclassifier_vit.utils import *
 from sclassifier_vit.dataset import get_multi_label_target_maps, get_single_label_target_maps
 from sclassifier_vit.dataset import MultiLabelDataset, SingleLabelDataset
 from sclassifier_vit.trainer import MultiLabelClassTrainer, SingleLabelClassTrainer
-from sclassifier_vit.custom_transforms import FlippingTransform, Rotate90Transform
+from sclassifier_vit.custom_transforms import FlippingTransform, Rotate90Transform, RandomCenterCrop
 from sclassifier_vit.metrics import build_multi_label_metrics, build_single_label_metrics
 from sclassifier_vit import logger
 
@@ -122,7 +122,19 @@ def get_args():
 	#parser.set_defaults(use_warmup_lr_schedule=False)
 	#parser.add_argument('-nepochs_warmup', '--nepochs_warmup', dest='nepochs_warmup', required=False, type=int, default=10, action='store',help='Number of epochs used in network training for warmup (default=100)')
 
+	# - Image augmentations options
 	parser.add_argument('-augmenter', '--augmenter', dest='augmenter', required=False, type=str, default='v1', action='store', help='Predefined augmenter to be used (default=v1)')
+	parser.add_argument('--add_center_crop_augm', dest='add_center_crop_augm', action='store_true', help='If enabled, add center crop  augmentation in training (default=false)')	
+	parser.set_defaults(add_rand_center_crop_augm=False)
+	parser.add_argument('-crop_size', '--crop_size', dest='crop_size', required=False, type=int, default=224, action='store', help='Crop size (in pixels) used for center crop augmentation (default=224).')
+	parser.add_argument('--add_rand_center_crop_augm', dest='add_rand_center_crop_augm', action='store_true', help='If enabled, add random center crop and resize (--resize_size) augmentation in training (default=false)')	
+	parser.set_defaults(add_rand_center_crop_augm=False)
+	parser.add_argument('-min_crop_fract', '--min_crop_fract', dest='min_crop_fract', required=False, type=float, default=0.65, action='store', help='Mininum crop fraction in random center crop (default=0.65).')
+	parser.add_argument('--add_blur_augm', dest='add_blur_augm', action='store_true', help='If enabled, add gaussian blur augmentation with prob= (default=false)')	
+	parser.set_defaults(add_blur_augm=False)
+	parser.add_argument('-blur_prob', '--blur_prob', dest='blur_prob', required=False, type=float, default=0.1, action='store', help='Blur probability (default=0.1).')
+	
+	# - Evaluation/logging
 	parser.add_argument('--skip_first_class', dest='skip_first_class', action='store_true',help='Skip first class (e.g. NONE/BACKGROUND) in multilabel classifier (default=false)')	
 	parser.set_defaults(skip_first_class=False)
 	
@@ -365,36 +377,69 @@ def main():
 	sigma_max= 3.0
 	ksize= 3.3 * sigma_max
 	kernel_size= int(max(ksize, 5)) # in imgaug kernel_size viene calcolato automaticamente dalla sigma così, ma forse si può semplificare a 3x3
-	blur_aug= T.GaussianBlur(kernel_size, sigma=(sigma_min, sigma_max))
+	blur_transf= T.GaussianBlur(kernel_size, sigma=(sigma_min, sigma_max))
+	blur_aug= T.RandomApply([blur_transf], p=args.blur_prob)
+	center_crop_aug= T.CenterCrop(size=args.crop_size)
+	rand_center_crop_aug= RandomCenterCrop(min_frac=args.min_crop_fract, max_frac=1.0, output_size=None)
+	
+	# - Set train augmentation
+	transf_list= []
+	
+	if args.add_center_crop_augm: # add CenterCrop
+		transf_list.append(center_crop_aug)
+		
+	if args.add_rand_center_crop_augm: # add RandomCenterCrop
+		transf_list.append(rand_center_crop_aug)
+		
+	transf_list.extend(
+		[
+			T.Resize(size, interpolation=T.InterpolationMode.BICUBIC),
+			FlippingTransform(),
+			Rotate90Transform(),
+		]
+	)
+	
+	if args.add_blur_augm:
+		transf_list.append(blur_aug)
 
-	transform_v1 = T.Compose(
+	transf_list.extend(
 		[
-			T.Resize(size, interpolation=T.InterpolationMode.BICUBIC),
-			FlippingTransform(),
-			Rotate90Transform(),
 			#T.ToTensor(),
 			T.Normalize(mean=mean, std=std),
 		]
 	)
+
+	transform_train = T.Compose(transf_list)
 	
-	transform_v2 = T.Compose(
-		[
-			T.Resize(size, interpolation=T.InterpolationMode.BICUBIC),
-			FlippingTransform(),
-			Rotate90Transform(),
-			T.RandomApply([blur_aug], p=0.1),
-			#T.ToTensor(),
-			T.Normalize(mean=mean, std=std),
-		]
-	)
+	#transform_v1 = T.Compose(
+	#	[
+	#		T.Resize(size, interpolation=T.InterpolationMode.BICUBIC),
+	#		FlippingTransform(),
+	#		Rotate90Transform(),
+	#		#T.ToTensor(),
+	#		T.Normalize(mean=mean, std=std),
+	#	]
+	#)
 	
-	if augmenter=="v1":
-		transform_train= transform_v1
-	elif augmenter=="v2":
-		transform_train= transform_v2
-	else:
-		transform_train= transform_v1
+	#transform_v2 = T.Compose(
+	#	[
+	#		T.Resize(size, interpolation=T.InterpolationMode.BICUBIC),
+	#		FlippingTransform(),
+	#		Rotate90Transform(),
+	#		T.RandomApply([blur_aug], p=0.1),
+	#		#T.ToTensor(),
+	#		T.Normalize(mean=mean, std=std),
+	#	]
+	#)
 	
+	#if augmenter=="v1":
+	#	transform_train= transform_v1
+	#elif augmenter=="v2":
+	#	transform_train= transform_v2
+	#else:
+	#	transform_train= transform_v1
+	
+	# - Set validation transform
 	transform_val = T.Compose(
 		[
 			T.Resize(size, interpolation=T.InterpolationMode.BICUBIC),
@@ -403,6 +448,7 @@ def main():
 		]
 	)
 	
+	# - Set test transform
 	transform_test = T.Compose(
 		[
 			T.Resize(size, interpolation=T.InterpolationMode.BICUBIC),

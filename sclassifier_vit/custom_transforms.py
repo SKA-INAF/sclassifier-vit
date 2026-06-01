@@ -52,3 +52,78 @@ class Rotate90Transform(torch.nn.Module):
 			return TF.rotate(img, 270)
 		elif op==4:
 			return img
+			
+##########################################
+##     RandomCenterCrop transform
+##########################################
+def _center_crop_params(h: int, w: int, frac: float) -> Tuple[int, int, int, int]:
+	"""Return (top, left, new_h, new_w) for a center crop with the given scale fraction."""
+	new_h = max(1, int(round(h * frac)))
+	new_w = max(1, int(round(w * frac)))
+	top = max(0, (h - new_h) // 2)
+	left = max(0, (w - new_w) // 2)
+	return top, left, new_h, new_w
+
+def _is_tensor_image(x: torch.Tensor) -> bool:
+	# Accept (C,H,W) or (H,W) tensors
+	return torch.is_tensor(x) and x.ndim in (2, 3)
+    
+def _resize_image(img, size: int):
+	if isinstance(img, PILImageTypes):
+		return TF.resize(img, size=(size, size), interpolation=TF.InterpolationMode.BICUBIC, antialias=True)
+	if _is_tensor_image(img):
+		return TF.resize(img, size=(size, size), interpolation=TF.InterpolationMode.BICUBIC, antialias=True)
+	raise TypeError(f"Unsupported image type: {type(img)}")
+    		
+def _crop_image(img, top: int, left: int, height: int, width: int):
+	# Works for PIL or torch Tensor
+	if isinstance(img, PILImageTypes):
+		return TF.crop(img, top, left, height, width)
+	if _is_tensor_image(img):
+		# torchscript-compatible crop
+		return img[..., top:top+height, left:left+width]
+	raise TypeError(f"Unsupported image type: {type(img)}")    		
+    		
+class RandomCenterCrop(torch.nn.Module):
+	"""
+		Center crop with a random scale fraction in [min_frac, max_frac], keeping aspect ratio.
+		Optionally resizes back to a square 'output_size'.
+		Works on a single image (PIL or Tensor (C,H,W)).
+	"""
+	def __init__(
+		self,
+		min_frac: float = 0.7,
+		max_frac: float = 1.0,
+		output_size: Optional[int] = None,
+		generator: Optional[torch.Generator] = None,
+	):
+		super().__init__()
+		assert 0.0 < min_frac <= max_frac <= 1.0
+		self.min_frac = float(min_frac)
+		self.max_frac = float(max_frac)
+		self.output_size = output_size
+		self.generator = generator  # for reproducibility if you pass a seeded generator
+
+	def _rand_uniform(self) -> float:
+		if self.generator is None:
+			return random.random()
+		# Torch generator path (stable across Python processes if seeded)
+		return float(torch.rand((), generator=self.generator).item())
+
+	def forward(self, img: Union[torch.Tensor, "Image.Image"]):
+		if isinstance(img, PILImageTypes):
+			w, h = img.size
+		elif _is_tensor_image(img):
+			# (C,H,W)
+			h, w = img.shape[-2], img.shape[-1]
+		else:
+			raise TypeError(f"Unsupported image type: {type(img)}")
+
+		frac = self.min_frac + (self.max_frac - self.min_frac) * self._rand_uniform()
+		top, left, new_h, new_w = _center_crop_params(h, w, frac)
+
+		img = _crop_image(img, top, left, new_h, new_w)
+		if self.output_size is not None:
+			img = _resize_image(img, self.output_size)
+
+		return img			
