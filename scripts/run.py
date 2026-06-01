@@ -369,24 +369,23 @@ def main():
 				#if max_freeze_layer_id==-1 or (max_freeze_layer_id>=0 and layer_index!=-1 and layer_index<max_freeze_layer_id):
 				#	param.requires_grad = False
 		
-			# 4. Handle structural shortcuts for larger models (ResNet-50/101/152)
+			# 4. Handle structural shortcuts for larger models (ResNet-50/101/152)	
 			elif "shortcut" in name and model_type == "resnet":
 				match = re.search(r"stages\.(\d+)\.layers\.(\d+)", name)
-				print(f"--> shortcut: layer={name} (index={layer_index}), match={match} ...")
+				print(f"Shortcut Backbone layer {name}: index={layer_index}, match={match} ...")
 				
 				if match:
-					# FIX: Format this to match the compressed registry keys (e.g., 's1_b0_l0')
-					companion_layer_key = f"s{match.group(1)}_b{match.group(2)}_l0"
+					# Build the exact dictionary key path used by the companion convolution layer
+					companion_layer_key = f"encoder.stages.{match.group(1)}.layers.{match.group(2)}.layer.0.convolution.weight"
         
-					# Search the registry values using the uniform key format
-					# If the key exists in our registry tracking table, pull its ID
-					registry_vals = [v for k, v in resnet_registry.items() if companion_layer_key in k or companion_layer_key == k]
-        
-					if registry_vals:
-						companion_idx = registry_vals[0]
-						if max_freeze_layer_id == -1 or max_freeze_layer_id > companion_idx:
+					# Check if this exact companion name is registered in our registry dictionary
+					if companion_layer_key in resnet_registry:
+						companion_idx = resnet_registry[companion_layer_key]
+            
+						# Apply your freezing threshold criteria
+						if max_freeze_layer_id == -1 or (max_freeze_layer_id >= 0 and companion_idx < max_freeze_layer_id):
 							param.requires_grad = False
-							print(f"--> Freezing shortcut layer {name} (tracked to index={companion_idx}) ...")
+							print(f"--> Freezing shortcut layer {name} (tracked to companion index={companion_idx}) ...")
 
 		# - Print resulting model		
 		logger.info("Print base model info ...")	
