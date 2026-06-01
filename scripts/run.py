@@ -99,6 +99,8 @@ def get_args():
 	parser.set_defaults(predict=False)
 	parser.add_argument('--test', dest='test', action='store_true', help='Run model test on input data (default=false)')	
 	parser.set_defaults(test=False)
+	parser.add_argument('--plot', dest='plot', action='store_true', help='Plot input data. Useful for debugging data transform/augmentation (default=false)')	
+	parser.set_defaults(plot=False)
 	
 	parser.add_argument('--vitloader', dest='vitloader', action='store_true', help='If enabled use ViTForImageClassification to load model otherwise AutoModelForImageClassification (default=false)')	
 	parser.set_defaults(vitloader=False)
@@ -895,6 +897,45 @@ def main():
 		with open(outfile, 'w') as fp:
 			json.dump(inference_out_data, fp, indent=2)
 	
+	################################
+	##    PLOT DATASET
+	################################
+	# - Draw images
+	elif args.plot:
+		logger.info("Plotting input data %s ..." % (datalist))
+		device = torch.device(device_choice if torch.cuda.is_available() else "cpu")
+
+		for i in range(nsamples):
+			if i%1000==0:
+				logger.info("#%d/%d images processed ..." % (i+1, nsamples))
+
+			# - Retrieve image info
+			image_info= dataset.load_image_info(i)
+			sname= image_info["sname"]
+			
+			# - Retrieve image tensor
+			image_tensor= dataset.load_tensor(i)
+			if image_tensor is None:
+				logger.warning("Skip None tensor at index %d ..." % (i))
+				continue
+				
+			image_tensor= image_tensor.unsqueeze(0).to(device)
+				
+			if args.cast_to_float:
+				image_tensor= image_tensor.float()
+
+			print(f"--> image_tensor no. {i+1} ({sname}) ...")
+			print("image_tensor.shape")
+			print(image_tensor.shape)
+			
+			# - Convert to numpy
+			image_npy= image_tensor.cpu().detach().numpy()
+			print("image_npy.shape")
+			print(image_npy.shape)
+			
+			# - Plot image
+			# ...
+
 	################################
 	##    TRAIN
 	################################

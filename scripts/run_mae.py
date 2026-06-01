@@ -205,16 +205,16 @@ class ModelArguments:
         default=16, metadata={"help": "The size (resolution) of each patch."}
     )
     hidden_size: int = field(
-        default=768, metadata={"help": "Dimensionality of the encoder layers and the pooler layer: vits=384, vitb=768, vitl=1024."}
+        default=768, metadata={"help": "Dimensionality of the encoder layers and the pooler layer: vitt=192, vits=384, vitb=768, vitl=1024."}
     )
     num_hidden_layers: int = field(
-        default=12, metadata={"help": "Number of hidden layers in the Transformer encoder: vits=12, vitb=12, vitb=24"}
+        default=12, metadata={"help": "Number of hidden layers in the Transformer encoder: vitt=12, vits=12, vitb=12, vitb=24"}
     )
     num_attention_heads: int = field(
-        default=12, metadata={"help": "Number of attention heads for each attention layer in the Transformer encoder: vits=6, vitb=12, vitl=16."}
+        default=12, metadata={"help": "Number of attention heads for each attention layer in the Transformer encoder: vitt=3, vits=6, vitb=12, vitl=16."}
     )
     intermediate_size: int = field(
-        default=3072, metadata={"help": "Dimensionality of the intermediate (i.e., feed-forward) layer in the Transformer encoder: vits=1536, vitb=3072, vitl=4096"}
+        default=3072, metadata={"help": "Dimensionality of the intermediate (i.e., feed-forward) layer in the Transformer encoder: vitt=768, vits=1536, vitb=3072, vitl=4096"}
     )
     num_channels: int = field(
         default=3, metadata={"help": "The number of input channels"}
@@ -358,7 +358,8 @@ def main():
         zscale_contrast=data_args.zscale_contrast,
         resize=data_args.resize,
         resize_size=data_args.resize_size,
-        verbose=False
+        verbose=False,
+        return_dict=True
     )
     
     dataset_val= None
@@ -371,7 +372,8 @@ def main():
             zscale_contrast=data_args.zscale_contrast,
             resize=data_args.resize,
             resize_size=data_args.resize_size,
-            verbose=False
+            verbose=False,
+            return_dict=True
         )
 
     # *****************************************************
