@@ -341,21 +341,35 @@ def main():
 	std = processor.image_std
 
 	print("*** Image processor config pars ***")
-	#print("size")
-	#print(size)
-	#print("mean")
-	#print(mean)
-	#print("std")
-	#print(std)
-	print("do_resize? ", (processor.do_resize))
+	if "do_resize" in processor:
+		print("do_resize? ", (processor.do_resize))
+	else:
+		print("do_resize? N/A")
+		
 	print("size: ", (size))
-	print("do_rescale? ", (processor.do_rescale))
-	print("rescale_factor: ", (processor.rescale_factor))
-	print("do_normalize? ", (processor.do_normalize))
+	
+	if "do_rescale" in processor:
+		print("do_rescale? ", (processor.do_rescale))
+	else:
+		print("do_rescale? N/A")
+		
+	if "rescale_factor" in processor:
+		print("rescale_factor: ", (processor.rescale_factor))
+	else:
+		print("rescale_factor: N/A")
+		
+	if "do_normalize" in processor:
+		print("do_normalize? ", (processor.do_normalize))
+	else:
+		print("do_normalize? N/A")
+		
 	print("mean: ", (mean))
 	print("std: ", (std))
-	print("do_convert_rgb? ", (processor.do_convert_rgb))
-	
+	if "do_convert_rgb" in processor:
+		print("do_convert_rgb? ", (processor.do_convert_rgb))
+	else:
+		print("do_convert_rgb? N/A")
+		
 	mean= [0.,0.,0.]
 	std= [1.,1.,1.]
 
