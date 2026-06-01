@@ -964,6 +964,12 @@ def main():
 			print(image_npy.min())
 			print(image_npy.max())
 			
+			# - Convert to uint8?
+			image_npy_min= image_npy.min()
+			image_npy_max= image_npy.max()
+			if image_npy_min==0 and image_npy_max==255:
+				image_npy= image_npy.astype(np.uint8)
+			
 			# - Plot image
 			print(f"--> Plotting image_npy no. {i+1} ({sname}) ...")
 			plt.imshow(image_npy, cmap="inferno")
