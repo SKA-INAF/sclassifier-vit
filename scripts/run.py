@@ -787,11 +787,11 @@ def main():
 				logger.warning("Skip None tensor at index %d ..." % (i))
 				continue
 				
+			image_tensor= image_tensor.unsqueeze(0).to(device)
+				
 			if args.cast_to_float:
-				image_tensor= image_tensor.unsqueeze(0).float().to(device)
-			else:
-				image_tensor= image_tensor.unsqueeze(0).to(device)
- 
+				image_tensor= image_tensor.float()
+				
 			with torch.no_grad():
 				outputs = model(image_tensor)
 				logits = outputs.logits
