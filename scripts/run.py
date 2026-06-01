@@ -89,7 +89,9 @@ def get_args():
 	parser.set_defaults(grayscale=False)
 	parser.add_argument('--resize', dest='resize', action='store_true', help='Resize input image before model processor. If false the model processor will resize anyway to its image size (default=false)')	
 	parser.set_defaults(resize=False)
-	parser.add_argument('-resize_size', '--resize_size', dest='resize_size', required=False, type=int, default=224, action='store', help='Resize size in pixels used if --resize option is enabled (default=224)')	
+	parser.add_argument('-resize_size', '--resize_size', dest='resize_size', required=False, type=int, default=224, action='store', help='Resize size in pixels used if --resize option is enabled (default=224)')
+	parser.add_argument('--cast_to_float', dest='cast_to_float', action='store_true', help='Cast input pixel_values to float in collate (default=false)')	
+	parser.set_defaults(cast_to_float=False)
 	
 	# - Model options
 	parser.add_argument('--predict', dest='predict', action='store_true', help='Predict model on input data (default=false)')	
@@ -509,8 +511,10 @@ def main():
 			pixel_values.append(item[0])
 			labels.append(item[1])
 			
-		#pixel_values= torch.stack(pixel_values)
-		pixel_values= torch.stack(pixel_values).float()
+		if args.cast_to_float:
+			pixel_values= torch.stack(pixel_values).float()
+		else: 
+			pixel_values= torch.stack(pixel_values)
 		labels= torch.stack(labels)
 		return {"pixel_values": pixel_values, "labels": labels}
 
