@@ -126,6 +126,10 @@ def get_args():
 
 	# - Image augmentations options
 	parser.add_argument('-augmenter', '--augmenter', dest='augmenter', required=False, type=str, default='v1', action='store', help='Predefined augmenter to be used (default=v1)')
+	parser.add_argument('--augmentation', dest='augmentation', action='store_true', help='Apply augmentation to train/val/test data (default=apply augmentation)')
+	parser.add_argument('--no_augmentation', dest='augmentation', action='store_false', help='Do not apply augmentation to train/val/test data (default=apply augmentation)')
+	parser.set_defaults(augmentation=True)
+	
 	parser.add_argument('--add_center_crop_augm', dest='add_center_crop_augm', action='store_true', help='If enabled, add center crop  augmentation in training (default=false)')	
 	parser.set_defaults(add_rand_center_crop_augm=False)
 	parser.add_argument('-crop_size', '--crop_size', dest='crop_size', required=False, type=int, default=224, action='store', help='Crop size (in pixels) used for center crop augmentation (default=224).')
@@ -459,9 +463,13 @@ def main():
 		]
 	)
 	
-	#if run_predict:
-	#	transform_test= None
-
+	# - Disable augmentation?
+	if not args.augmentation:
+		logger.info("Setting all augmenter transforms (train/cv/test) to None (e.g. disabling augmentation) ...")
+		transform_train= None
+		transform_cv= None
+		transform_test= None
+	
 	##################################
 	##     DATASET
 	##################################
