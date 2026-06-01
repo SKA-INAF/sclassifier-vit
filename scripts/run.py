@@ -359,11 +359,11 @@ def main():
 			# - Freeze usign layer_id threshold
 			#layer_index= extract_layer_id_vit(name)
 			layer_index = extract_layer_id(name, model_type=model_type, resnet_registry=resnet_registry)
-			print(f"Backbone layer {name}: index={layer_index} ...")
+			logger.debug(f"Backbone layer {name}: index={layer_index} ...")
 			
 			if layer_index != -1:
 				if max_freeze_layer_id == -1 or (max_freeze_layer_id >= 0 and layer_index < max_freeze_layer_id):
-					print(f"--> Freezing backbone layer {name} (index={layer_index}) ...")
+					logger.info(f"--> Freezing backbone layer {name} (index={layer_index}) ...")
 					param.requires_grad = False
 				
 				#if max_freeze_layer_id==-1 or (max_freeze_layer_id>=0 and layer_index!=-1 and layer_index<max_freeze_layer_id):
@@ -372,7 +372,7 @@ def main():
 			# 4. Handle structural shortcuts for larger models (ResNet-50/101/152)	
 			elif "shortcut" in name and model_type == "resnet":
 				match = re.search(r"stages\.(\d+)\.layers\.(\d+)", name)
-				print(f"Shortcut Backbone layer {name}: index={layer_index}, match={match} ...")
+				logger.debug(f"Shortcut Backbone layer {name}: index={layer_index}, match={match} ...")
 				
 				if match:
 					# Build the exact dictionary key path used by the companion convolution layer
@@ -385,16 +385,19 @@ def main():
 						# Apply your freezing threshold criteria
 						if max_freeze_layer_id == -1 or (max_freeze_layer_id >= 0 and companion_idx < max_freeze_layer_id):
 							param.requires_grad = False
-							print(f"--> Freezing shortcut layer {name} (tracked to companion index={companion_idx}) ...")
+							logger.info(f"--> Freezing shortcut layer {name} (tracked to companion index={companion_idx}) ...")
 
 		# - Print resulting model		
 		logger.info("Print base model info ...")	
 		for name, param in model.base_model.named_parameters():
-			print(name, param.requires_grad)	
+			logger.info("Layer {name} requires_grad? {param.requires_grad}")
+			#print(name, param.requires_grad)	
 				
 		logger.info("Print entire model info ...")
 		for name, param in model.named_parameters():
-			print(name, param.requires_grad)	
+			logger.info("Layer {name} requires_grad? {param.requires_grad}")
+			#print(name, param.requires_grad)	
+			
 	
 	##################################
 	##     DATA TRANSFORMS
