@@ -145,6 +145,7 @@ def get_args():
 	parser.add_argument('-runname', '--runname', dest='runname', required=False, type=str, default="llava_1.5_radio", action='store',help='Run name')
 	parser.add_argument('--verbose', dest='verbose', action='store_true',help='Enable verbose printout (default=false)')	
 	parser.set_defaults(verbose=False)
+	parser.add_argument("--report_to", dest='report_to', type=str, default="wandb", help="Report logs/metrics to {wandb, none}")
 	
 	# - Output options
 	parser.add_argument('-outdir','--outdir', dest='outdir', required=False, default="", type=str, help='Output data dir') 
@@ -546,7 +547,7 @@ def main():
 		logging_nan_inf_filter=False,
 		#disable_tqdm=True,
 		run_name=run_name,
-    report_to="wandb",  # enable logging to W&B
+    report_to=args.report_to,  # enable logging to W&B
 	)
 	
 	# - Set optimizer
