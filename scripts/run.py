@@ -46,7 +46,12 @@ from sclassifier_vit.utils import *
 from sclassifier_vit.dataset import get_multi_label_target_maps, get_single_label_target_maps
 from sclassifier_vit.dataset import MultiLabelDataset, SingleLabelDataset
 from sclassifier_vit.trainer import MultiLabelClassTrainer, SingleLabelClassTrainer
-from sclassifier_vit.custom_transforms import FlippingTransform, Rotate90Transform, RandomCenterCrop
+from sclassifier_vit.custom_transforms import (
+	FlippingTransform, 
+	Rotate90Transform, 
+	RandomCenterCrop,
+	MinMaxNormalization
+)
 from sclassifier_vit.metrics import build_multi_label_metrics, build_single_label_metrics
 from sclassifier_vit import logger
 
@@ -90,6 +95,8 @@ def get_args():
 	parser.add_argument('--resize', dest='resize', action='store_true', help='Resize input image before model processor. If false the model processor will resize anyway to its image size (default=false)')	
 	parser.set_defaults(resize=False)
 	parser.add_argument('-resize_size', '--resize_size', dest='resize_size', required=False, type=int, default=224, action='store', help='Resize size in pixels used if --resize option is enabled (default=224)')
+	parser.add_argument('-norm_min', '--norm_min', dest='norm_min', required=False, type=float, default=0.0, action='store',help='Min normalization value in MinMaxNormalization transform (default=0.0)')
+	parser.add_argument('-norm_max', '--norm_max', dest='norm_max', required=False, type=float, default=1.0, action='store',help='Max normalization value in MinMaxNormalization transform (default=1.0)')
 	parser.add_argument('--cast_to_float', dest='cast_to_float', action='store_true', help='Cast input pixel_values to float in collate (default=cast)')
 	parser.add_argument('--no_cast_to_float', dest='cast_to_float', action='store_false', help='Do not cast input pixel_values to float in collate (default=cast)')
 	parser.set_defaults(cast_to_float=True)
@@ -404,6 +411,7 @@ def main():
 			T.Resize(size, interpolation=T.InterpolationMode.BICUBIC),
 			FlippingTransform(),
 			Rotate90Transform(),
+			MinMaxNormalization(norm_min=args.norm_min, norm_max=args.norm_max),
 		]
 	)
 	
@@ -452,6 +460,7 @@ def main():
 	transform_val = T.Compose(
 		[
 			T.Resize(size, interpolation=T.InterpolationMode.BICUBIC),
+			MinMaxNormalization(norm_min=args.norm_min, norm_max=args.norm_max),
 			#T.ToTensor(),
 			T.Normalize(mean=mean, std=std),
 		]
@@ -461,6 +470,7 @@ def main():
 	transform_test = T.Compose(
 		[
 			T.Resize(size, interpolation=T.InterpolationMode.BICUBIC),
+			MinMaxNormalization(norm_min=args.norm_min, norm_max=args.norm_max),
 			#T.ToTensor(),
 			T.Normalize(mean=mean, std=std),
 		]
