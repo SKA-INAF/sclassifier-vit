@@ -89,7 +89,11 @@ class MultiLabelClassTrainer(transformers.Trainer):
 			return
 			
 		print(f"***** {split} metrics *****")
-		metrics_formatted = self.metrics_format(metrics)
+		try:
+			metrics_formatted = self.metrics_format(metrics)
+		except Exception as e:
+			logger.warning(f"Syntax error when formatting the metrics (err={str(e)}), retrying with another method ...")
+			metrics_formatted = transformers.Trainer.metrics_format(metrics)
 		
 		# - Find class names
 		class_names= []
@@ -238,8 +242,11 @@ class SingleLabelClassTrainer(transformers.Trainer):
 			
 		
 		print(f"***** {split} metrics *****")
-		metrics_formatted = self.metrics_format(metrics)
-		
+		try:
+			metrics_formatted = self.metrics_format(metrics)
+		except Exception as e:
+			logger.warning(f"Syntax error when formatting the metrics (err={str(e)}), retrying with another method ...")
+			metrics_formatted = transformers.Trainer.metrics_format(metrics)
 		
 		# - Find class names
 		class_names= []
