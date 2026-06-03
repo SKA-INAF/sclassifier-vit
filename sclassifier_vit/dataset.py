@@ -111,6 +111,7 @@ def get_single_label_target_maps(schema="morph_tags"):
 	""" Return single-label classifier target maps """
 	
 	if schema=="morph_class":
+		# RadioGalaxyZoo (RGZ) dataset
 		id2target= {
 			1: 0, # 1C-1P
 			2: 1, # 1C-2P
@@ -173,6 +174,7 @@ def get_single_label_target_maps(schema="morph_tags"):
 		}	
 		
 	elif schema=="rg_morph_binary":
+		# MIRABEST dataset
 		id2target= {
 			1: 0, # FR-I
 			2: 1, # FR-II
@@ -181,6 +183,22 @@ def get_single_label_target_maps(schema="morph_tags"):
 		id2label= {
 			0: "FR-I",
 			1: "FR-II",
+		}
+		
+	elif schema=="rg_morph":
+		# LOTSS DR2 Horton dataset
+		id2target= {
+			0: 0, # FR-I
+			1: 1, # FR-II
+			2: 2, # HYBRID
+			3: 3, # OTHER
+		}
+			
+		id2label= {
+			0: "FR-I",
+			1: "FR-II",
+			2: "HYBRID",
+			3: "OTHER"
 		}
 		
 	# - Compute reverse dict
