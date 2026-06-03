@@ -785,7 +785,7 @@ def main():
 				args=training_opts,
 				compute_metrics=compute_metrics_custom,
 				#tokenizer=processor,
-				processing_class=image_processor,
+				processing_class=processor,
 				data_collator=collate_fn,
 				optimizers=(optimizer, scheduler)
 			)
@@ -796,7 +796,7 @@ def main():
 				args=training_opts,
 				compute_metrics=compute_metrics_custom,
 				#tokenizer=processor,
-				processing_class=image_processor,
+				processing_class=processor,
 				data_collator=collate_fn,
 				optimizers=(optimizer, scheduler)
 			)
@@ -811,7 +811,7 @@ def main():
 				eval_dataset=dataset_cv,
 				compute_metrics=compute_metrics_custom,
 				#tokenizer=processor,
-				processing_class=image_processor,
+				processing_class=processor,
 				data_collator=collate_fn,
 				optimizers=(optimizer, scheduler)
 			)
@@ -824,7 +824,7 @@ def main():
 				eval_dataset=dataset_cv,
 				compute_metrics=compute_metrics_custom,
 				#tokenizer=processor,
-				processing_class=image_processor,
+				processing_class=processor,
 				data_collator=collate_fn,
 				optimizers=(optimizer, scheduler)
 			)
