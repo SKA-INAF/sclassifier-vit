@@ -44,32 +44,41 @@ from sclassifier_vit import logger
 class MultiLabelClassTrainer(transformers.Trainer):
 	def __init__(
   	self,
+  	*args,
   	num_labels,
-		model: Union[PreTrainedModel, nn.Module] = None,
-		args: TrainingArguments = None,
-		data_collator: Optional[DataCollator] = None,
-		train_dataset: Optional[Union[Dataset, IterableDataset, "datasets.Dataset"]] = None,
-		eval_dataset: Optional[Union[Dataset, Dict[str, Dataset], "datasets.Dataset"]] = None,
-		tokenizer: Optional[PreTrainedTokenizerBase] = None,
-		model_init: Optional[Callable[[], PreTrainedModel]] = None,
-		compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
-		callbacks: Optional[List[TrainerCallback]] = None,
-		optimizers: Tuple[torch.optim.Optimizer, torch.optim.lr_scheduler.LambdaLR] = (None, None),
-		preprocess_logits_for_metrics: Optional[Callable[[torch.Tensor, torch.Tensor], torch.Tensor]] = None,
+  	**kwargs
 	):
-		super().__init__(
-			model=model, 
-			args=args,
-			data_collator=data_collator,
-			train_dataset=train_dataset,
-			eval_dataset=eval_dataset,
-			tokenizer=tokenizer,
-			model_init=model_init,
-			compute_metrics=compute_metrics,
-			callbacks=callbacks,
-			optimizers=optimizers,
-			preprocess_logits_for_metrics=preprocess_logits_for_metrics
-		)
+		super().__init__(*args, **kwargs)
+		
+	#def __init__(
+  #	self,
+  #	num_labels,
+	#	model: Union[PreTrainedModel, nn.Module] = None,
+	#	args: TrainingArguments = None,
+	#	data_collator: Optional[DataCollator] = None,
+	#	train_dataset: Optional[Union[Dataset, IterableDataset, "datasets.Dataset"]] = None,
+	#	eval_dataset: Optional[Union[Dataset, Dict[str, Dataset], "datasets.Dataset"]] = None,
+	#	tokenizer: Optional[PreTrainedTokenizerBase] = None,
+	#	model_init: Optional[Callable[[], PreTrainedModel]] = None,
+	#	compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
+	#	callbacks: Optional[List[TrainerCallback]] = None,
+	#	optimizers: Tuple[torch.optim.Optimizer, torch.optim.lr_scheduler.LambdaLR] = (None, None),
+	#	preprocess_logits_for_metrics: Optional[Callable[[torch.Tensor, torch.Tensor], torch.Tensor]] = None,
+	#):
+	#	super().__init__(
+	#		model=model, 
+	#		args=args,
+	#		data_collator=data_collator,
+	#		train_dataset=train_dataset,
+	#		eval_dataset=eval_dataset,
+	#		tokenizer=tokenizer,
+	#		model_init=model_init,
+	#		compute_metrics=compute_metrics,
+	#		callbacks=callbacks,
+	#		optimizers=optimizers,
+	#		preprocess_logits_for_metrics=preprocess_logits_for_metrics
+	#	)
+	
 		self.num_labels= num_labels
 	
 	
@@ -183,32 +192,41 @@ class MultiLabelClassTrainer(transformers.Trainer):
 class SingleLabelClassTrainer(transformers.Trainer):
 	def __init__(
   	self,
+  	*args,
   	num_labels,
-		model: Union[PreTrainedModel, nn.Module] = None,
-		args: TrainingArguments = None,
-		data_collator: Optional[DataCollator] = None,
-		train_dataset: Optional[Union[Dataset, IterableDataset, "datasets.Dataset"]] = None,
-		eval_dataset: Optional[Union[Dataset, Dict[str, Dataset], "datasets.Dataset"]] = None,
-		tokenizer: Optional[PreTrainedTokenizerBase] = None,
-		model_init: Optional[Callable[[], PreTrainedModel]] = None,
-		compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
-		callbacks: Optional[List[TrainerCallback]] = None,
-		optimizers: Tuple[torch.optim.Optimizer, torch.optim.lr_scheduler.LambdaLR] = (None, None),
-		preprocess_logits_for_metrics: Optional[Callable[[torch.Tensor, torch.Tensor], torch.Tensor]] = None,
+  	**kwargs
 	):
-		super().__init__(
-			model=model, 
-			args=args,
-			data_collator=data_collator,
-			train_dataset=train_dataset,
-			eval_dataset=eval_dataset,
-			tokenizer=tokenizer,
-			model_init=model_init,
-			compute_metrics=compute_metrics,
-			callbacks=callbacks,
-			optimizers=optimizers,
-			preprocess_logits_for_metrics=preprocess_logits_for_metrics
-		)
+		super().__init__(*args, **kwargs)
+  
+	#def __init__(
+  #	self,
+  #	num_labels,
+	#	model: Union[PreTrainedModel, nn.Module] = None,
+	#	args: TrainingArguments = None,
+	#	data_collator: Optional[DataCollator] = None,
+	#	train_dataset: Optional[Union[Dataset, IterableDataset, "datasets.Dataset"]] = None,
+	#	eval_dataset: Optional[Union[Dataset, Dict[str, Dataset], "datasets.Dataset"]] = None,
+	#	tokenizer: Optional[PreTrainedTokenizerBase] = None,
+	#	model_init: Optional[Callable[[], PreTrainedModel]] = None,
+	#	compute_metrics: Optional[Callable[[EvalPrediction], Dict]] = None,
+	#	callbacks: Optional[List[TrainerCallback]] = None,
+	#	optimizers: Tuple[torch.optim.Optimizer, torch.optim.lr_scheduler.LambdaLR] = (None, None),
+	#	preprocess_logits_for_metrics: Optional[Callable[[torch.Tensor, torch.Tensor], torch.Tensor]] = None,
+	#):
+	#	super().__init__(
+	#		model=model, 
+	#		args=args,
+	#		data_collator=data_collator,
+	#		train_dataset=train_dataset,
+	#		eval_dataset=eval_dataset,
+	#		tokenizer=tokenizer,
+	#		model_init=model_init,
+	#		compute_metrics=compute_metrics,
+	#		callbacks=callbacks,
+	#		optimizers=optimizers,
+	#		preprocess_logits_for_metrics=preprocess_logits_for_metrics
+	#	)
+	
 		self.num_labels= num_labels
 	
 	

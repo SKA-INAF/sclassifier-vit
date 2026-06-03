@@ -784,7 +784,8 @@ def main():
 				model=model,
 				args=training_opts,
 				compute_metrics=compute_metrics_custom,
-				tokenizer=processor,
+				#tokenizer=processor,
+				processing_class=image_processor,
 				data_collator=collate_fn,
 				optimizers=(optimizer, scheduler)
 			)
@@ -794,7 +795,8 @@ def main():
 				model=model,
 				args=training_opts,
 				compute_metrics=compute_metrics_custom,
-				tokenizer=processor,
+				#tokenizer=processor,
+				processing_class=image_processor,
 				data_collator=collate_fn,
 				optimizers=(optimizer, scheduler)
 			)
@@ -808,7 +810,8 @@ def main():
 				train_dataset=dataset,
 				eval_dataset=dataset_cv,
 				compute_metrics=compute_metrics_custom,
-				tokenizer=processor,
+				#tokenizer=processor,
+				processing_class=image_processor,
 				data_collator=collate_fn,
 				optimizers=(optimizer, scheduler)
 			)
@@ -820,7 +823,8 @@ def main():
 				train_dataset=dataset,
 				eval_dataset=dataset_cv,
 				compute_metrics=compute_metrics_custom,
-				tokenizer=processor,
+				#tokenizer=processor,
+				processing_class=image_processor,
 				data_collator=collate_fn,
 				optimizers=(optimizer, scheduler)
 			)
