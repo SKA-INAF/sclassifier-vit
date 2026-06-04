@@ -64,9 +64,9 @@ class FocalLossMultiClass(nn.Module):
 
 	def forward(self, logits, targets):
 		# Ensure targets are int64, and forcefully reshape them to [B, 1]
-    # This safely handles both [B] and [B, 1] inputs from dataloaders
-    targets = targets.long().view(-1, 1)
-	
+		# This safely handles both [B] and [B, 1] inputs from dataloaders
+		targets = targets.long().view(-1, 1)
+
 		# - logits: [B, C], targets: [B] int64
 		log_probs = F.log_softmax(logits, dim=1)              # [B, C]
 		probs = torch.exp(log_probs)                          # [B, C]
