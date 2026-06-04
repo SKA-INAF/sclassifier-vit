@@ -309,63 +309,45 @@ class ScoreOrientedLoss(nn.Module):
 		
 		# multiclass one-vs-rest on softmax probabilities
 		probs = torch.softmax(logits, dim=-1)                # (B,C)
-		y_idx = labels.view(-1).long()                       # (B,)
 		
-		#print("probs")
-		#print(probs)
-		#print(probs.shape)
-		#print("y_idx")
-		#print(y_idx)
-		#print(y_idx.shape)
-    
+		#y_idx = labels.view(-1).long()  # (B,)
+		
+		# ---------------------------------------------------------
+		# Detect if labels are already one-hot [B, C]
+		# ---------------------------------------------------------
+		if labels.ndim == 2 and labels.shape[1] == C:
+			# Already one-hot encoded, just ensure it's float
+			y_onehot = labels.float()
+		else:
+			# Labels are class indices [B] or [B, 1], so we build the one-hot
+			y_idx = labels.view(-1).long()                       # (B,)
+			y_onehot = torch.zeros_like(probs).scatter_(1, y_idx.unsqueeze(1), 1.0)  # (B,C)
+		# ---------------------------------------------------------
+		
 		# build one-hot without breaking grad path
-		y_onehot = torch.zeros_like(probs).scatter_(1, y_idx.unsqueeze(1), 1.0)  # (B,C)
+		#y_onehot = torch.zeros_like(probs).scatter_(1, y_idx.unsqueeze(1), 1.0)  # (B,C)
 		
-		#print("y_onehot")
-		#print(y_onehot)
-		#print(y_onehot.shape)
-
 		per_class_scores = []
 		per_class_weights = []  # for 'weighted' mode: weight by #negatives like the TF ref
 		
 		for j in range(C):
 			p_j = probs[:, j]               # (B,)
 			y_j = y_onehot[:, j]            # (B,)
-			#print(f"p_{j}")
-			#print(p_j)
-			#print(p_j.shape)
-			#print(f"y_{j}")
-			#print(y_j)
-			#print(y_j.shape)
 			
 			TN, FP, FN, TP = self._expected_confusion(y_j, p_j, j=j)
 			s_j = self._compute_score_from_confusion(TN, FP, FN, TP, which=self.score_fn)
 			per_class_scores.append(s_j)
 			
-			#print("TN")
-			#print(TN)
-			#print("FP")
-			#print(FP)
-			#print("FN")
-			#print(FN)
-			#print("TP")
-			#print(TP)
-			#print(f"s_{j}")
-			#print(s_j)
-
 			# weight by #negatives in batch (like original SOL 'weighted' option)
 			n_neg = torch.clamp((y_j.shape[0] - y_j.sum()), min=1.0)
 			per_class_weights.append(n_neg)
-
+			
 		scores = torch.stack(per_class_scores)               # (C,)
 		if self.mode.lower() == 'weighted':
 			w = torch.stack(per_class_weights)               # (C,)
 			score = (scores * w).sum() / w.sum()
 		else:
 			score = scores.mean()
-			
-		#print("score")
-		#print(score)
 			
 		return score
 
