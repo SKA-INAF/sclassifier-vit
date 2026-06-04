@@ -1326,7 +1326,7 @@ def main():
 		# - Custom args
 		multilabel=args.multilabel,
 		class_weights=class_weights,
-		loss_type=args.loss_type, # "ce" or "focal"
+		loss_type=args.loss_type, # "ce" or "focal" or "sol"
 		focal_gamma=args.focal_gamma,
 		focal_alpha=focal_alpha,  # tensor[C] or float or None
 		sol_score=args.sol_score,
