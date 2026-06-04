@@ -692,7 +692,7 @@ def load_image_transform(args, image_processor):
 		]
 	)
 	
-	return transform_train, transform
+	return transform_train, transform_valtest
 
 
 ######################
