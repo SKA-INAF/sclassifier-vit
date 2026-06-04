@@ -134,7 +134,19 @@ def get_args():
 	#parser.add_argument('--use_warmup_lr_schedule', dest='use_warmup_lr_schedule', action='store_true',help='Use linear warmup+cos decay schedule to update learning rate (default=false)')	
 	#parser.set_defaults(use_warmup_lr_schedule=False)
 	#parser.add_argument('-nepochs_warmup', '--nepochs_warmup', dest='nepochs_warmup', required=False, type=int, default=10, action='store',help='Number of epochs used in network training for warmup (default=100)')
-
+	
+	
+	
+	# - Model loss options
+	parser.add_argument("--use_weighted_loss", dest='use_weighted_loss', action="store_true", default=False, help="Use class-weighted loss (CE or focal alpha).")
+	parser.add_argument("--weight_compute_mode", dest='weight_compute_mode', type=str, choices=["balanced", "inverse", "inverse_v2"], default="balanced", help="How to compute class weights")
+	parser.add_argument('--normalize_weights', dest='normalize_weights', action='store_true', help="Enable normalization of class weights.")
+	parser.add_argument('--no_normalize_weights', dest='normalize_weights', action='store_false', help="Disable normalization of class weights.")
+	parser.set_defaults(normalize_weights=True)
+	parser.add_argument("--loss_type", dest='loss_type', type=str, choices=["ce", "focal"], default="ce", help="Loss type: standard cross-entropy or focal loss")
+	parser.add_argument("--focal_gamma", dest='focal_gamma', type=float, default=2.0, help="Focal loss gamma (focusing parameter).")
+	parser.add_argument("--set_focal_alpha_to_mild_estimate", dest='set_focal_alpha_to_mild_estimate', action="store_true", default=False, help="Set focal alpha to mild estimate, otherwise to class_weights.")
+	
 	# - Image augmentations options
 	parser.add_argument('-augmenter', '--augmenter', dest='augmenter', required=False, type=str, default='v1', action='store', help='Predefined augmenter to be used (default=v1)')
 	parser.add_argument('--augmentation', dest='augmentation', action='store_true', help='Apply augmentation to train/val/test data (default=apply augmentation)')
@@ -170,6 +182,8 @@ def get_args():
 	parser.set_defaults(multilabel=False)
 	parser.add_argument('-label_schema', '--label_schema', dest='label_schema', required=False, type=str, default='morph_tags', action='store',help='Predefined label schema to be used. For multilabel class: {"morph_tags","morph_tags_B1"}. For single-label classification: {"morph_tags","morph_class","binary_qa","anomaly_class","rg_morph_binary","rg_morph"} (default=morph_tags)')
 	parser.add_argument('-background_label', '--background_label', dest='background_label', required=False, type=str, default='BACKGROUND', action='store',help='Name of background class used in predict when skip_first_class is enabled (default=BACKGROUND)')
+	parser.add_argument('--binary', dest='binary', action='store_true',help='Choose binary classification label scheme (default=false)')	
+	parser.set_defaults(binary=False)
 	
 	# - Run options
 	parser.add_argument('-device', '--device', dest='device', required=False, type=str, default="cuda:0", action='store',help='Device identifier')
@@ -191,8 +205,7 @@ def get_args():
 	args = parser.parse_args()	
 
 	return args		
-	
-			
+				
 ##############
 ##   MAIN   ##
 ##############
@@ -711,15 +724,8 @@ def main():
 	
 	# - Set optimizer
 	optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
-	#training_opts.set_optimizer(name="adamw_torch", learning_rate=learning_rate)
 	
 	# - Set scheduler
-	#training_opts.set_lr_scheduler(
-	#	name=lr_scheduler, 
-	#	num_epochs=nepochs,
-	#	warmup_ratio=warmup_ratio
-	#)
-	
 	tot_batch_size= args.ngpu * batch_size * gradient_accumulation_steps
 	if drop_last:
 		n_batches = nsamples // batch_size
@@ -745,26 +751,6 @@ def main():
 	else:
 		scheduler= transformers.get_constant_schedule(optimizer)	
 	
-	##scheduler= transformers.get_constant_schedule(optimizer)
-	#training_opts.set_lr_scheduler(name="linear", num_epochs=nepochs)
-	#num_warmup_steps= 0
-	##if use_warmup_lr_schedule:
-	##	num_training_steps=nsamples*nepochs
-	##	num_warmup_steps=nsamples*nepochs_warmup
-	##	logger.info("Setting cosine schedule with warmup (nsteps=%d, nsteps_warmup=%d" % (num_training_steps, num_warmup_steps))
-	
-	#	#scheduler= transformers.get_cosine_schedule_with_warmup(
-	#	#	optimizer,
-	#	#	num_training_steps=num_training_steps,
-	#	#	num_warmup_steps=num_warmup_steps
-	#	#)
-		
-	#	#training_opts.set_lr_scheduler(
-	#	#	name="cosine", 
-	#	#	num_epochs=nepochs,
-	#	#	warmup_steps=num_warmup_steps
-	#	#)
-	
 	print("--> training options")
 	print(training_opts)
 	
@@ -774,6 +760,76 @@ def main():
 		#compute_metrics_custom= build_multi_label_metrics(None)
 	else:
 		compute_metrics_custom= build_single_label_metrics(label_names)
+		
+	# - Compute class weights
+	#   NB: Only for single-label classification
+	class_weights= None
+	class_weights_binary= None
+	focal_alpha= None
+	
+	if not args.multilabel and args.use_weighted_loss:
+		logger.info("Computing class weights from dataset ...")
+		class_weights = dataset.compute_class_weights(
+			num_classes=num_labels, 
+			id2target=id2target,
+			scheme=args.weight_compute_mode,
+			normalize=args.normalize_weights,
+			binary=False
+		)
+		print("--> CLASS WEIGHTS")
+		print(class_weights)
+		
+		# - Compute binary class weights?
+		if args.binary: 
+			logger.info("Computing binary class weights from dataset ...")
+			class_weights_binary= dataset.compute_class_weights(
+				num_classes=num_labels, 
+				id2target=id2target,
+				scheme=args.weight_compute_mode,
+				normalize=args.normalize_weights,
+				binary=True,
+				positive_label=1, 
+				laplace=1.0
+			)
+			
+			print("--> BINARY CLASS WEIGHTS")
+			print(class_weights_binary) 
+		
+		# Set focal loss pars
+		#   - For focal alpha in multiclass, you can re-use class_weights
+		#   - Often alpha ~ class_weights (normalized); you can also pass a float
+		if args.loss_type=="focal":
+			if args.set_focal_alpha_to_mild_estimate:
+				logger.info("Setting focal alpha to mild estimate ...")
+				focal_alpha, counts= dataset.compute_mild_focal_alpha_from_dataset(
+    			num_classes=num_labels,
+    			id2target=id2target,
+					exponent=0.5,
+					cap_ratio=10.0,
+					#device="cuda" if torch.cuda.is_available() else "cpu"
+					device=device
+				)
+			else:
+				logger.info("Setting focal alpha to class_weights if not None ...")
+				counts= None
+				focal_alpha = class_weights if args.loss_type == "focal" else None	
+
+			def summarize_alpha(alpha_t, counts=None):
+				if alpha_t is None:
+					print("Focal alpha: None")
+				else:
+					alpha = alpha_t.detach().cpu().numpy()
+					print("Focal alpha  :", np.round(alpha, 4).tolist(), " (mean=", round(alpha.mean(), 4), ", median=", round(np.median(alpha), 4), ")")
+			
+				if counts is not None:
+					print("Class counts :", counts.tolist())
+		
+			print("--> FOCAL GAMMA")
+			print(args.focal_gamma)
+			print("--> FOCAL ALPHA")
+			print(focal_alpha)
+			summarize_alpha(focal_alpha, counts)
+		
 		
 	# - Initialize trainer
 	if run_test:
@@ -792,6 +848,12 @@ def main():
 		else:
 			trainer= SingleLabelClassTrainer(
 				num_labels=num_labels,
+				class_weights=class_weights,
+				loss_type=args.loss_type,                  # "ce" or "focal"
+				focal_gamma=args.focal_gamma,
+				focal_alpha=focal_alpha,              # tensor[C] or float or None
+				binary_pos_weights=class_weights_binary,
+				logitout_size=(1 if args.binary else num_labels),
 				model=model,
 				args=training_opts,
 				compute_metrics=compute_metrics_custom,
@@ -818,6 +880,12 @@ def main():
 		else:
 			trainer= SingleLabelClassTrainer(
 				num_labels=num_labels,
+				class_weights=class_weights,
+				loss_type=args.loss_type,                  # "ce" or "focal"
+				focal_gamma=args.focal_gamma,
+				focal_alpha=focal_alpha,              # tensor[C] or float or None
+				binary_pos_weights=class_weights_binary,
+				logitout_size=(1 if args.binary else num_labels),
 				model=model,
 				args=training_opts,
 				train_dataset=dataset,

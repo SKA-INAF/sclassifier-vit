@@ -148,6 +148,62 @@ def build_resnet_layer_registry(model):
             
 	return registry  
   
+def maybe_wrap_classifier_with_dropout(model, p: float, num_out: int | None = None):
+	"""If model.classifier is a plain Linear, wrap it as Dropout+Linear."""
+	
+	if p <= 0.0:
+		print("Dropout fraction <=0, nothing to be done ...")
+		return
+		
+	if not hasattr(model, "classifier"):
+		print("Cannot access to model classifier attribute, nothing to be done ...")
+		return
+	
+	clf = getattr(model, "classifier")
+	if isinstance(clf, torch.nn.Sequential):
+		print("Model classifier already wrapped with dropout layer ...")
+		return  # already wrapped
+		
+	if isinstance(clf, torch.nn.Linear):
+		in_features  = clf.in_features
+		out_features = num_out if num_out is not None else clf.out_features
+		print(f"Adding dropout layer in classifier head (out_features={out_features}) ...")
+		model.classifier = torch.nn.Sequential(
+			torch.nn.Dropout(p=float(p)),
+			torch.nn.Linear(in_features, out_features)
+		)  
+  
+def load_state_dict_any(path_or_dir: str) -> dict:
+	"""Load state_dict from either .safetensors (single or shards) or .bin."""
+	paths = find_weight_files(path_or_dir)
+
+	state = {}
+	if paths[0].suffix == ".safetensors":
+		# safetensors: can be single or sharded
+		from safetensors.torch import load_file as safe_load
+		for f in paths:
+			shard = safe_load(str(f))
+			# merge shards (keys are disjoint)
+			overlap = set(state).intersection(shard)
+			if overlap:
+				raise RuntimeError(f"Overlapping keys across shards: {sorted(list(overlap))[:5]}")
+			state.update(shard)
+		return state
+	else:
+		# torch .bin
+		obj = torch.load(str(paths[0]), map_location="cpu")
+		# unwrap common containers
+		if isinstance(obj, dict):
+			if "state_dict" in obj and isinstance(obj["state_dict"], dict):
+				obj = obj["state_dict"]
+			elif "model" in obj and isinstance(obj["model"], dict):
+				obj = obj["model"]
+		elif hasattr(obj, "state_dict"):
+			obj = obj.state_dict()
+		if not isinstance(obj, dict):
+			raise TypeError(f"Loaded object is not a state_dict. Got {type(obj)} from {paths[0]}")
+		return obj  
+  
 ##########################
 ##   IMAGE PROC UTILS
 ##########################

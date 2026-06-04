@@ -382,6 +382,36 @@ class AstroImageDataset(Dataset):
 		
 		return img
 		
+	def load_target(self, idx, id2target):
+		""" Load single-class/single-out target """
+			
+		# - Get class ids
+		id= self.datalist[idx]['id']
+		class_id= id2target[id]
+		
+		return class_id	
+		
+	def load_targets(self, idx, id2target):
+		""" Load single-class/single-out target """
+			
+		# - Get class ids
+		ids= self.datalist[idx]['ids']
+		class_ids= [id2target[id] for id in ids]
+		return class_ids	
+		
+	def load_hotenc_targets(self, idx, id2target, mlb):
+		""" Load multi-class/multi-out targets """	
+		
+		# - Get class ids
+		class_ids= self.load_targets(idx, id2target)
+		
+		# - Get class id (hot encoding)
+		class_ids_hotenc= [mlb.fit_transform([[id]]) for id in class_ids]
+		class_ids_hotenc = [j for sub in class_ids_hotenc for j in sub]
+		class_ids_hotenc= torch.from_numpy(np.array(class_ids_hotenc).astype(np.float32))
+		
+		return class_ids_hotenc	
+		
 	def load_image_info(self, idx):
 		""" Load image metadata """
 		return self.datalist[idx]
@@ -392,6 +422,120 @@ class AstroImageDataset(Dataset):
 	def get_sample_size(self):
 		return len(self.datalist)
 		
+	def compute_class_weights(
+		self, 
+		num_classes, 
+		id2target, 
+		scheme="balanced", 
+		normalize=True,
+		binary=False,
+		positive_label=1,
+		laplace=1.0
+	):
+		""" Compute class weights from dataset """
+    
+		# - Collect labels
+		ys = []
+		for i in range(len(self.datalist)):
+			y= self.load_target(i, id2target)
+			ys.append(int(y))
+		
+		counts = np.bincount(ys, minlength=num_classes).astype(float)
+		
+		print("counts")
+		print(counts)
+
+		# --- Binary path: also provide BCE pos_weight + optional per-sample weights
+		if binary and num_classes == 2:
+			pos_idx = int(positive_label)
+			neg_idx = 1 - pos_idx
+
+			# Laplace smoothing to avoid divide-by-zero on rare/empty class
+			pos_s = counts[pos_idx] + laplace
+			neg_s = counts[neg_idx] + laplace
+
+			# BCEWithLogitsLoss: pos_weight multiplies the positive examples in the loss
+			# canonical choice ≈ N_neg / N_pos (do NOT normalize this)
+			class_weights = torch.tensor([neg_s / pos_s], dtype=torch.float32) # length-1 tensor: [N_neg/N_pos]
+       
+		else:
+			if scheme == "inverse":
+				w = 1.0 / np.maximum(counts, 1.0)
+			elif scheme == "inverse_v2":
+				w = np.max(counts)/counts
+			else:
+				# "balanced" like sklearn: n_samples / (n_classes * count_c)
+				n = counts.sum()
+				w = n / (num_classes * np.maximum(counts, 1.0))
+
+			# optional normalization (keeps average weight ~1)
+			print("weights")
+			print(w)
+			
+			if normalize:
+				w = w * (num_classes / w.sum())
+				print("weights (after norm)")
+				print(w)
+		
+			class_weights = torch.tensor(w, dtype=torch.float32)	
+		
+		return class_weights
+		
+	def compute_mild_focal_alpha_from_dataset(
+		self,
+		num_classes,
+		id2target,
+		use_flareid= False,
+		exponent= 0.5,     # use 0.5 for sqrt inverse-frequency
+		cap_ratio= 10.0,   # cap at <= 10× median weight
+		device= "cpu",
+		dtype= torch.float32,
+	):
+		"""
+			Returns a torch.Tensor of shape [num_classes] to be used as focal alpha.
+				- Start from class frequencies (counts / total).
+				- Compute inverse-frequency^exponent (e.g., 1/sqrt(freq)).
+				- Normalize so mean(alpha)=1 (nice for loss scale).
+				- Cap at <= cap_ratio × median(alpha).
+		"""
+
+		# - Collect labels
+		ys = []
+		if use_flareid:
+			for i in range(len(self.datalist)):
+				y= self.load_flareid(i)
+				ys.append(int(y))
+		else:
+			for i in range(len(self.datalist)):
+				y= self.load_target(i, id2target)
+				ys.append(int(y))		
+
+		counts = np.bincount(ys, minlength=num_classes).astype(float)
+		total = counts.sum()
+    
+		# - Avoid division by zero and handle missing classes
+		eps = 1e-8
+		freqs = counts / max(total, 1)
+		freqs = np.clip(freqs, eps, 1.0)
+
+		# - inverse-frequency^exponent
+		inv = np.power(1.0 / freqs, exponent)
+
+		# - normalize: mean(alpha)=1 (keeps loss scale stable)
+		alpha = inv / inv.mean()
+
+		# - cap extremes: <= cap_ratio × median(alpha)
+		med = np.median(alpha)
+		cap = med * cap_ratio
+		alpha = np.minimum(alpha, cap)
+
+		# - (optional) tiny floor to avoid exact zeros after numeric ops
+		alpha = np.maximum(alpha, 1e-6)
+
+		# - torch tensor
+		alpha_t = torch.tensor(alpha, dtype=dtype, device=device)
+		
+		return alpha_t, counts	
 		
 ################################################
 ###      DATASET (MULTI-LABEL CLASSIFICATION
