@@ -555,7 +555,7 @@ def load_training_opts(args):
 			
 	return training_opts		
 
-def load_optimizer(model, args):
+def load_optimizer(model, dataset, args):
 	""" Build and return optimizer/lr scheduler """
 
 	# - Create optimizer
@@ -1230,7 +1230,7 @@ def main():
 
 	# - Set optimizer & scheduler
 	logger.info("Creating optimizer/lr scheduler ...")
-	optimizer, scheduler= load_optimizer(model, args)
+	optimizer, scheduler= load_optimizer(model, dataset, args)
 	
 	# - Set metrics
 	logger.info("Creating metrics ...")
