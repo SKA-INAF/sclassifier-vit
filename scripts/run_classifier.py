@@ -158,7 +158,11 @@ def get_args():
 	parser.add_argument("--loss_type", dest='loss_type', type=str, choices=["ce", "focal"], default="ce", help="Loss type: standard cross-entropy or focal loss")
 	parser.add_argument("--focal_gamma", dest='focal_gamma', type=float, default=2.0, help="Focal loss gamma (focusing parameter).")
 	parser.add_argument("--set_focal_alpha_to_mild_estimate", dest='set_focal_alpha_to_mild_estimate', action="store_true", default=False, help="Set focal alpha to mild estimate, otherwise to class_weights.")
-	
+	parser.add_argument('-sol_score', '--sol_score', dest='sol_score', choices=["accuracy", "precision", "recall", "specificity", "f1", "tss", "csi", "hss1", "hss2"], required=False, type=str, default='tss', action='store', help='Solar score used (default=tss)')
+	parser.add_argument('-sol_distribution', '--sol_distribution', dest='sol_distribution', choices=["uniform", "cosine"], required=False, type=str, default='uniform', action='store', help='Solar score distribution used (default=uniform)')
+	parser.add_argument('-sol_mode', '--sol_mode', dest='sol_mode', choices=["weighted", "average"], required=False, type=str, default='average', action='store', help='Solar score averaging mode used (default=average)')
+	parser.add_argument("--sol_add_constant", dest='sol_add_constant', action="store_true", default=False, help="Add constant (+1) to solar loss (default=false).")
+		
 	# - Image augmentations options
 	parser.add_argument('--augmentation', dest='augmentation', action='store_true', help='Apply augmentation to train/val/test data (default=apply augmentation)')
 	parser.add_argument('--no_augmentation', dest='augmentation', action='store_false', help='Do not apply augmentation to train/val/test data (default=apply augmentation)')
@@ -1325,6 +1329,10 @@ def main():
 		loss_type=args.loss_type, # "ce" or "focal"
 		focal_gamma=args.focal_gamma,
 		focal_alpha=focal_alpha,  # tensor[C] or float or None
+		sol_score=args.sol_score,
+		sol_distribution=args.sol_distribution,
+		sol_mode=args.sol_mode,
+		sol_add_constant=args.sol_add_constant,
 		binary_pos_weights=class_weights_binary,
 		logitout_size=(1 if args.binary else num_labels),
 	)

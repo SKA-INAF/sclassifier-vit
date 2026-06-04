@@ -42,82 +42,10 @@ import evaluate
 
 # - SCLASSIFIER-VIT
 from sclassifier_vit.utils import *
+from sclassifier_vit.losses import FocalLossMultiClass, FocalLossMultiLabel, ScoreOrientedLoss
 from sclassifier_vit import logger
 
-##########################################
-##    FOCAL LOSS
-##########################################
-class FocalLossMultiClass(nn.Module):
-	"""
-		Multi-class focal loss with logits.
-			- alpha: Tensor [C] or float or None (class weighting)
-			- gamma: focusing parameter
-	"""
-
-	def __init__(self, alpha=None, gamma=2.0, reduction="mean"):
-		super().__init__()
-		self.gamma = gamma
-		self.reduction = reduction
-		#self.alpha = alpha  # None | float | Tensor[C]
-		self.register_buffer("alpha", alpha if alpha is not None else None)  # stays on the right device 
-
-	def forward(self, logits, targets):
-		# - logits: [B, C], targets: [B] int64
-		log_probs = F.log_softmax(logits, dim=1)              # [B, C]
-		probs = torch.exp(log_probs)                          # [B, C]
-		
-		# - pick the prob/log_prob of the target class
-		pt = probs.gather(1, targets.unsqueeze(1)).squeeze(1)       # [B]
-		log_pt = log_probs.gather(1, targets.unsqueeze(1)).squeeze(1)  # [B]
-		focal_term = (1.0 - pt).clamp_min(1e-8).pow(self.gamma)      # [B]
-
-		if self.alpha is None:
-			alpha_t = 1.0
-		elif isinstance(self.alpha, float):
-			alpha_t = self.alpha
-		else:
-			# alpha is tensor [C]
-			alpha_t = self.alpha.to(logits.device).gather(0, targets)
-
-		loss = -alpha_t * focal_term * log_pt  # [B]
-		if self.reduction == "mean":
-			return loss.mean()
-		elif self.reduction == "sum":
-			return loss.sum()
-		else:
-			return loss
-
-
-class FocalLossMultiLabel(nn.Module):
-	"""
-		Multi-label focal loss with logits (BCE variant).
-		pos_weight acts like class-wise alpha for positives.
-	"""
-    
-	def __init__(self, gamma=2.0, pos_weight=None, reduction="mean"):
-		super().__init__()
-		self.gamma = gamma
-		self.pos_weight = pos_weight  # Tensor [C] or None
-		self.reduction = reduction
-
-	def forward(self, logits, targets):
-		# logits: [B, C], targets: [B, C] in {0,1}
-		# stable BCE terms
-		bce = F.binary_cross_entropy_with_logits(logits, targets, reduction="none", pos_weight=self.pos_weight)
-		# pt for each class
-		p = torch.sigmoid(logits)
-		pt = torch.where(targets == 1, p, 1 - p)
-		focal_term = (1 - pt).clamp_min(1e-8).pow(self.gamma)
-
-		loss = focal_term * bce
-		if self.reduction == "mean":
-			return loss.mean()
-		elif self.reduction == "sum":
-			return loss.sum()
-		else:
-			return loss
-			
-			
+	
 ##########################################
 ##    CUSTOM TRAINER
 ##########################################			
@@ -130,6 +58,10 @@ class CustomTrainer(transformers.Trainer):
 		loss_type="ce",              # "ce" or "focal"
 		focal_gamma=2.0,
 		focal_alpha=None,            # None | float | tensor[C] (multiclass)
+		sol_score="tss", 
+		sol_distribution="uniform", 
+		sol_mode="average",
+		sol_add_constant=False,
 		binary_pos_weights=None,
 		logitout_size=4,
   	**kwargs
@@ -142,6 +74,10 @@ class CustomTrainer(transformers.Trainer):
 		self.loss_type = loss_type
 		self.focal_gamma = focal_gamma
 		self.focal_alpha = focal_alpha
+		self.sol_score= sol_score
+		self.sol_distribution= sol_distribution
+		self.sol_mode= sol_mode
+		self.sol_add_constant= sol_add_constant
 		self.binary_pos_weights= binary_pos_weights
 		self.logitout_size= logitout_size
 		self.is_binary_single_logit = (
@@ -163,6 +99,9 @@ class CustomTrainer(transformers.Trainer):
 	def _set_singlelabel_class_loss_fcn(self):
 		""" Set loss function for single-label classification """
 			
+		#========================
+		#==    CE LOSS
+		#========================
 		if self.loss_type == "ce":
 			if self.is_binary_single_logit:
 				# BCE for single-logit binary
@@ -172,6 +111,9 @@ class CustomTrainer(transformers.Trainer):
 				w = self.class_weights.to(self.dev) if self.class_weights is not None else None
 				self.loss_fct = torch.nn.CrossEntropyLoss(weight=w)	
 				
+		#========================
+		#==    FOCAL LOSS
+		#========================
 		elif self.loss_type == "focal":
 			if self.is_binary_single_logit:
 				# Use BCE-style focal via multilabel focal (C=1)
@@ -186,7 +128,22 @@ class CustomTrainer(transformers.Trainer):
 				if isinstance(alpha, torch.Tensor):
 					alpha = alpha.to(self.dev)
 				self.loss_fct = FocalLossMultiClass(alpha=alpha, gamma=self.focal_gamma, reduction="mean")
-					
+				
+		#========================
+		#==    SOL LOSS
+		#========================
+		elif self.loss_type == "sol":
+			# Note: from_logits=True; multiclass handled automatically
+			self.loss_fct = ScoreOrientedLoss(
+				score_fn=self.sol_score,
+				distribution=self.sol_distribution,
+				mu=0.5, 
+				delta=0.1,       # ignored for uniform
+				mode=self.sol_mode,
+				#from_logits=True,
+				add_constant=self.sol_add_constant,  # usually False (pure -TSS)
+			)
+							
 		else:
 			raise ValueError(f"Unknown loss_type: {self.loss_type}")
 				
@@ -437,6 +394,10 @@ class MultiLabelClassTrainer(transformers.Trainer):
 		loss_type="ce",              # "ce" or "focal"
 		focal_gamma=2.0,
 		focal_alpha=None,            # None | float | tensor[C] (multiclass)
+		sol_score="tss", 
+		sol_distribution="uniform", 
+		sol_mode="average",
+		sol_add_constant=False,
 		binary_pos_weights=None,
 		logitout_size=4,
   	**kwargs
@@ -478,6 +439,10 @@ class MultiLabelClassTrainer(transformers.Trainer):
 		self.loss_type = loss_type
 		self.focal_gamma = focal_gamma
 		self.focal_alpha = focal_alpha
+		self.sol_score= sol_score
+		self.sol_distribution= sol_distribution
+		self.sol_mode= sol_mode
+		self.sol_add_constant= sol_add_constant
 		self.binary_pos_weights= binary_pos_weights
 		self.logitout_size= logitout_size
 		self.is_binary_single_logit = (
@@ -611,6 +576,10 @@ class SingleLabelClassTrainer(transformers.Trainer):
 		loss_type="ce",              # "ce" or "focal"
 		focal_gamma=2.0,
 		focal_alpha=None,            # None | float | tensor[C] (multiclass)
+		sol_score="tss", 
+		sol_distribution="uniform", 
+		sol_mode="average",
+		sol_add_constant=False,
 		binary_pos_weights=None,
 		logitout_size=4,
   	**kwargs
@@ -623,6 +592,10 @@ class SingleLabelClassTrainer(transformers.Trainer):
 		self.loss_type = loss_type
 		self.focal_gamma = focal_gamma
 		self.focal_alpha = focal_alpha
+		self.sol_score= sol_score
+		self.sol_distribution= sol_distribution
+		self.sol_mode= sol_mode
+		self.sol_add_constant= sol_add_constant
 		self.binary_pos_weights= binary_pos_weights
 		self.logitout_size= logitout_size
 		self.is_binary_single_logit = (
@@ -655,6 +628,18 @@ class SingleLabelClassTrainer(transformers.Trainer):
 				if isinstance(alpha, torch.Tensor):
 					alpha = alpha.to(dev)
 				self.loss_fct = FocalLossMultiClass(alpha=alpha, gamma=self.focal_gamma, reduction="mean")
+			
+		elif self.loss_type == "sol":
+			# Note: from_logits=True; multiclass handled automatically
+			self.loss_fct = ScoreOrientedLoss(
+				score_fn=self.sol_score,
+				distribution=self.sol_distribution,
+				mu=0.5, 
+				delta=0.1,       # ignored for uniform
+				mode=self.sol_mode,
+				#from_logits=True,
+				add_constant=self.sol_add_constant,  # usually False (pure -TSS)
+			)
 					
 		else:
 			raise ValueError(f"Unknown loss_type: {self.loss_type}")
