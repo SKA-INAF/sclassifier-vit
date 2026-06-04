@@ -125,7 +125,6 @@ class CustomTrainer(transformers.Trainer):
 	def __init__(
   	self,
   	*args,
-  	num_labels,
   	multilabel=False,
   	class_weights=None,          # torch.tensor [C] or None
 		loss_type="ce",              # "ce" or "focal"
@@ -138,7 +137,6 @@ class CustomTrainer(transformers.Trainer):
 		super().__init__(*args, **kwargs)
 		
 		# - Set class vars
-		self.num_labels= num_labels
 		self.multilabel= multilabel
 		self.class_weights = class_weights
 		self.loss_type = loss_type
