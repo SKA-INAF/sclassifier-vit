@@ -1121,7 +1121,7 @@ def run_train(
 	print(train_result.metrics) 
         
 	# - Run evaluation
-	if args.dataset_cv is not None:
+	if args.datalist_cv!="":
 		logger.info("Running model evaluation ...")
 		metrics = trainer.evaluate()
 		trainer.log_metrics("eval", metrics)
