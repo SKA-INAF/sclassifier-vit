@@ -63,16 +63,20 @@ class FocalLossMultiClass(nn.Module):
 		self.register_buffer("alpha", alpha if alpha is not None else None)  # stays on the right device 
 
 	def forward(self, logits, targets):
-		# Ensure targets are strictly 64-bit integers for gather()
-		targets = targets.long()
+		# Ensure targets are int64, and forcefully reshape them to [B, 1]
+    # This safely handles both [B] and [B, 1] inputs from dataloaders
+    targets = targets.long().view(-1, 1)
 	
 		# - logits: [B, C], targets: [B] int64
 		log_probs = F.log_softmax(logits, dim=1)              # [B, C]
 		probs = torch.exp(log_probs)                          # [B, C]
 		
 		# - pick the prob/log_prob of the target class
-		pt = probs.gather(1, targets.unsqueeze(1)).squeeze(1)       # [B]
-		log_pt = log_probs.gather(1, targets.unsqueeze(1)).squeeze(1)  # [B]
+		# Since targets is already [B, 1], we don't unsqueeze here
+		pt = probs.gather(1, targets).squeeze(1)              # [B]
+		###pt = probs.gather(1, targets.unsqueeze(1)).squeeze(1)       # [B]
+		log_pt = log_probs.gather(1, targets).squeeze(1)      # [B]
+		###log_pt = log_probs.gather(1, targets.unsqueeze(1)).squeeze(1)  # [B]
 		focal_term = (1.0 - pt).clamp_min(1e-8).pow(self.gamma)      # [B]
 
 		if self.alpha is None:
@@ -81,7 +85,9 @@ class FocalLossMultiClass(nn.Module):
 			alpha_t = self.alpha
 		else:
 			# alpha is tensor [C]
-			alpha_t = self.alpha.to(logits.device).gather(0, targets)
+			# We squeeze targets back to [B] so it matches the 1D alpha tensor
+			alpha_t = self.alpha.to(logits.device).gather(0, targets.squeeze(1))
+			###alpha_t = self.alpha.to(logits.device).gather(0, targets)
 
 		loss = -alpha_t * focal_term * log_pt  # [B]
 		if self.reduction == "mean":
