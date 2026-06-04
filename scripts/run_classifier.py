@@ -368,7 +368,7 @@ def load_image_model_auto(
 	return model, image_processor	
 
 
-def load_image_model(
+def load_model(
 	args,
 	id2label,
 	label2id,
