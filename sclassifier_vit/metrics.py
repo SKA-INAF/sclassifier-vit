@@ -181,6 +181,8 @@ def single_label_metrics(predictions, labels, target_names=None):
 	
 	f1score_micro = f1_score(y_true=y_true, y_pred=y_pred, average='micro')
 	
+	f1score_macro = f1_score(y_true=y_true, y_pred=y_pred, average='macro')
+	
 	cm= confusion_matrix(y_true, y_pred)
 	cm_norm= confusion_matrix(y_true, y_pred, normalize="true")
 
@@ -205,6 +207,7 @@ def single_label_metrics(predictions, labels, target_names=None):
 		'precision': precision,
 		'f1score': f1score,
 		'f1score_micro': f1score_micro,
+		'f1score_macro': f1score_macro,
 		'class_report': class_report,
 		'confusion_matrix': cm.tolist(),# to make it serialized in json save
 		'confusion_matrix_norm': cm_norm.tolist(), # to make it serialized in json save
@@ -232,68 +235,4 @@ def build_single_label_metrics(target_names):
 		
 	return compute_single_label_metrics
 
-	
 
-
-def get_multi_label_target_maps(skip_first_class):
-	""" Return multi-label classifier target maps """
-
-	id2label= {
-		0: "BACKGROUND",
-		1: "RADIO-GALAXY",
-		2: "EXTENDED",
-		3: "DIFFUSE",
-		4: "DIFFUSE-LARGE",
-		5: "ARTEFACT"
-	}
-	
-	label2id= {
-		"BACKGROUND": 0,
-		"RADIO-GALAXY": 1,
-		"EXTENDED": 2,
-		"DIFFUSE": 3,
-		"DIFFUSE-LARGE": 4,
-		"ARTEFACT": 5
-	}
-	
-	if skip_first_class:
-		id2label= {
-			0: "RADIO-GALAXY",
-			1: "EXTENDED",
-			2: "DIFFUSE",
-			3: "DIFFUSE-LARGE",
-			4: "ARTEFACT"
-		}
-	
-		label2id= {
-			"RADIO-GALAXY": 0,
-			"EXTENDED": 1,
-			"DIFFUSE": 2,
-			"DIFFUSE-LARGE": 3,
-			"ARTEFACT": 4
-		}
-		
-	return id2label, label2id
-	
-def get_single_label_target_maps():
-	""" Return single-label classifier target maps """
-	
-	id2label= {
-		0: "1C-1P",
-		1: "1C-2P",
-		2: "1C-3P",
-		3: "2C-2P",
-		4: "2C-3P",
-		5: "3C-3P"
-	}
-		
-	label2id= {
-		"1C-1P": 0,
-		"1C-2P": 1,
-		"1C-3P": 2,
-		"2C-2P": 3,
-		"2C-3P": 4,
-		"3C-3P": 5
-	}
-	
-	return id2label, label2id
