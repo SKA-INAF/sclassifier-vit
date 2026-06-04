@@ -63,6 +63,9 @@ class FocalLossMultiClass(nn.Module):
 		self.register_buffer("alpha", alpha if alpha is not None else None)  # stays on the right device 
 
 	def forward(self, logits, targets):
+		# Ensure targets are strictly 64-bit integers for gather()
+		targets = targets.long()
+	
 		# - logits: [B, C], targets: [B] int64
 		log_probs = F.log_softmax(logits, dim=1)              # [B, C]
 		probs = torch.exp(log_probs)                          # [B, C]
