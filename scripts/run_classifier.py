@@ -781,7 +781,7 @@ def load_dataset(
 				verbose=args.verbose,
 			)
 			nsamples_cv= dataset_cv.get_sample_size()
-			logger.info(f"#{nsamples_cv} entries in val dataset ..." % (nsamples_cv))
+			logger.info(f"#{nsamples_cv} entries in val dataset ...")
 	
 	return dataset, dataset_cv
 			
