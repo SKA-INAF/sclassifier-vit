@@ -443,6 +443,7 @@ class SingleLabelClassTrainer(transformers.Trainer):
 			print("⚠️ NaN values detected in batch label tensor!")
 		
 		# - Retrieve logits
+		outputs = model(pixel_values)
 		logits = outputs.logits
 		if torch.isnan(logits).any() or torch.isinf(logits).any():
 			print("⚠️ NaN values detected in logits tensor!")	
