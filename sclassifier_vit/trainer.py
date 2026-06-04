@@ -150,7 +150,7 @@ class CustomTrainer(transformers.Trainer):
 		self.dev = next(self.model.parameters()).device
 		
 		# - Set loss fcn
-		self.set_loss_fcn()
+		self._set_loss_fcn()
 		
 	def _set_loss_fcn(self):
 		""" Set loss function """
