@@ -195,7 +195,7 @@ def get_args():
 	
 	parser.add_argument('--multilabel', dest='multilabel', action='store_true', help='Do multilabel classification (default=false)')	
 	parser.set_defaults(multilabel=False)
-	parser.add_argument('-label_schema', '--label_schema', dest='label_schema', required=False, type=str, default='morph_tags', action='store',help='Predefined label schema to be used. For multilabel class: {"morph_tags","morph_tags_B1"}. For single-label classification: {"morph_tags","morph_class","binary_qa","anomaly_class","rg_morph_binary","rg_morph"} (default=morph_tags)')
+	parser.add_argument('-label_schema', '--label_schema', dest='label_schema', required=False, type=str, default='morph_tags', action='store',help='Predefined label schema to be used. For multilabel class: {"morph_tags","morph_tags_B1"}. For single-label classification: {"morph_tags","morph_class","binary_qa","anomaly_class","rg_morph_binary","rg_morph","rg_morph_horton"} (default=morph_tags)')
 	parser.add_argument('-background_label', '--background_label', dest='background_label', required=False, type=str, default='BACKGROUND', action='store',help='Name of background class used in predict when skip_first_class is enabled (default=BACKGROUND)')
 	parser.add_argument('--binary', dest='binary', action='store_true',help='Choose binary classification label scheme (default=false)')	
 	parser.set_defaults(binary=False)
