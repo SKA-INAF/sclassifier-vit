@@ -126,6 +126,7 @@ def get_args():
 	parser.add_argument('-min_lr', '--min_lr', dest='min_lr', required=False, type=float, default=1e-6, action='store',help='Learning rate min used in cosine_with_min_lr (default=1.e-6)')
 	parser.add_argument('-warmup_ratio', '--warmup_ratio', dest='warmup_ratio', required=False, type=float, default=0.2, action='store',help='Warmup ratio par (default=0.2)')
 	parser.add_argument('-batch_size', '--batch_size', dest='batch_size', required=False, type=int, default=8, action='store',help='Batch size used in training (default=8)')
+	parser.add_argument('-batch_size_eval', '--batch_size_eval', dest='batch_size_eval', required=False, type=int, default=None, action='store',help='Batch size used for evaluation. If None set equal to train batch size (default=None)')
 	
 	parser.add_argument('--drop_last', dest='drop_last', action='store_true',help='Drop last incomplete batch (default=false)')	
 	parser.set_defaults(drop_last=False)
@@ -186,6 +187,7 @@ def get_args():
 	parser.add_argument('-background_label', '--background_label', dest='background_label', required=False, type=str, default='BACKGROUND', action='store',help='Name of background class used in predict when skip_first_class is enabled (default=BACKGROUND)')
 	parser.add_argument('--binary', dest='binary', action='store_true',help='Choose binary classification label scheme (default=false)')	
 	parser.set_defaults(binary=False)
+	parser.add_argument('-metric_for_best_model', '--metric_for_best_model', dest='metric_for_best_model', required=False, type=str, choices=["f1score","f1score_micro","f1score_macro","recall","precision"], default='f1score', action='store', help='Metric used to select the best model assuming "greater" is better (default=f1score)')
 	
 	# - Run options
 	parser.add_argument('-device', '--device', dest='device', required=False, type=str, default="cuda:0", action='store',help='Device identifier')
@@ -193,12 +195,13 @@ def get_args():
 	parser.add_argument('--verbose', dest='verbose', action='store_true',help='Enable verbose printout (default=false)')	
 	parser.set_defaults(verbose=False)
 	parser.add_argument("--report_to", dest='report_to', type=str, default="wandb", help="Report logs/metrics to {wandb, none}")
+	parser.add_argument('-seed', '--seed', dest='seed', required=False, type=int, default=42, action='store',help='Random seed that will be set at the beginning of training (default=42)')
 	
 	# - Output options
 	parser.add_argument('-outdir','--outdir', dest='outdir', required=False, default="", type=str, help='Output data dir') 
 	parser.add_argument('--save_model_every_epoch', dest='save_model_every_epoch', action='store_true', help='Save model every epoch (default=false)')	
 	parser.set_defaults(save_model_every_epoch=False)
-	parser.add_argument('-max_checkpoints', '--max_checkpoints', dest='max_checkpoints', required=False, type=int, default=1, action='store',help='Max number of saved checkpoints (default=1)')
+	parser.add_argument('-max_checkpoints', '--max_checkpoints', dest='max_checkpoints', required=False, type=int, default=2, action='store',help='Max number of saved checkpoints (default=1)')
 	parser.add_argument('-outfile','--outfile', dest='outfile', required=False, default="classifier_results.json", type=str, help='Output file with saved inference results') 
 	
 	parser.add_argument('--save_base_path', dest='save_base_path', action='store_true', help='Save input base filename in output json catalog rather than full path (default=save full path)')	
@@ -681,12 +684,26 @@ def main():
 	#logger.debug("log_dir=%s" % (log_dir))
 	
 	# - Set eval strategy
+	#eval_strategy= "no"
+	#if dataset_cv is not None:
+	#	if run_eval_on_step:
+	#		eval_strategy= "steps"
+	#	else:
+	#		eval_strategy= "epoch"
+			
+	# - Set eval & save strategy
 	eval_strategy= "no"
-	if dataset_cv is not None:
-		if run_eval_on_step:
+	load_best_model_at_end= False
+	save_strategy= "no"
+	batch_size_eval= args.batch_size if args.batch_size_eval is None else args.batch_size_eval
+	if args.datalist_cv!="":
+		load_best_model_at_end= True
+		if args.run_eval_on_step:
 			eval_strategy= "steps"
+			save_strategy= "steps"
 		else:
 			eval_strategy= "epoch"
+			save_strategy= "epoch"
 	
 	# - Set training options
 	logger.info("Set model options ...")
@@ -704,14 +721,16 @@ def main():
 		per_device_eval_batch_size=batch_size,
 		gradient_accumulation_steps=gradient_accumulation_steps,
 		dataloader_drop_last= drop_last,
-		#eval_strategy="steps" if run_eval_on_step else "epoch",
 		eval_strategy=eval_strategy,
-		eval_on_start=run_eval_on_start,
-		eval_steps=logging_steps,
+		eval_on_start=args.run_eval_on_start,
+		eval_steps=args.logging_steps,
+		metric_for_best_model=args.metric_for_best_model,
+		greater_is_better=True,
+		load_best_model_at_end=load_best_model_at_end,
 		##batch_eval_metrics=False,
 		##label_names=label_names,# DO NOT USE (see https://discuss.huggingface.co/t/why-do-i-get-no-validation-loss-and-why-are-metrics-not-calculated/32373)
-		save_strategy="epoch" if save_model_every_epoch else "no",
-		save_total_limit=max_checkpoints,
+		save_strategy=save_strategy,
+		save_total_limit=args.max_checkpoints, # at most keep only BEST + LAST
 		logging_dir = log_dir,
 		log_level="debug",
 		logging_strategy="steps",
@@ -721,6 +740,7 @@ def main():
 		#disable_tqdm=True,
 		run_name=run_name,
     report_to=args.report_to,  # enable logging to W&B
+    seed=args.seed,
     weight_decay=args.weight_decay,
 	)
 	
