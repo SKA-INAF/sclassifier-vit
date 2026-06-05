@@ -142,7 +142,7 @@ def get_args():
 	parser.add_argument('--normalize_weights', dest='normalize_weights', action='store_true', help="Enable normalization of class weights.")
 	parser.add_argument('--no_normalize_weights', dest='normalize_weights', action='store_false', help="Disable normalization of class weights.")
 	parser.set_defaults(normalize_weights=True)
-	parser.add_argument("--loss_type", dest='loss_type', type=str, choices=["ce", "focal"], default="ce", help="Loss type: standard cross-entropy or focal loss")
+	parser.add_argument("--loss_type", dest='loss_type', type=str, choices=["ce", "focal", "sol"], default="ce", help="Loss type: standard cross-entropy, focal loss, or score-oriented loss")
 	parser.add_argument("--focal_gamma", dest='focal_gamma', type=float, default=2.0, help="Focal loss gamma (focusing parameter).")
 	parser.add_argument("--set_focal_alpha_to_mild_estimate", dest='set_focal_alpha_to_mild_estimate', action="store_true", default=False, help="Set focal alpha to mild estimate, otherwise to class_weights.")
 	parser.add_argument('-sol_score', '--sol_score', dest='sol_score', choices=["accuracy", "precision", "recall", "specificity", "f1", "tss", "csi", "hss1", "hss2"], required=False, type=str, default='tss', action='store', help='Solar score used (default=tss)')
