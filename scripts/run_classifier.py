@@ -199,7 +199,7 @@ def get_args():
 	parser.add_argument('-background_label', '--background_label', dest='background_label', required=False, type=str, default='BACKGROUND', action='store',help='Name of background class used in predict when skip_first_class is enabled (default=BACKGROUND)')
 	parser.add_argument('--binary', dest='binary', action='store_true',help='Choose binary classification label scheme (default=false)')	
 	parser.set_defaults(binary=False)
-	parser.add_argument('-metric_for_best_model', '--metric_for_best_model', dest='metric_for_best_model', required=False, type=str, default='loss', action='store', help='Metric used to select the best model {"loss","f1score", "f1score_micro", "recall", "precision"} (default=loss)')
+	parser.add_argument('-metric_for_best_model', '--metric_for_best_model', dest='metric_for_best_model', required=False, type=str, default='loss', action='store', help='Metric used to select the best model {"loss", "f1score", "f1score_micro", "f1score_macro", "recall", "precision"} (default=loss)')
 	
 	# - Run options
 	parser.add_argument('-device', '--device', dest='device', required=False, type=str, default="cuda:0", action='store',help='Device identifier')
@@ -1111,10 +1111,56 @@ def run_train(
 	#train_result = trainer.train(resume_from_checkpoint=checkpoint)
 	train_result = trainer.train()
 	
-	# - Save model
-	logger.info("Saving trained model ...")	
-	trainer.save_model()
+	# - Ensure all ranks finished training & any internal saves
+	is_main = bool(trainer.args.should_save)
+	out_dir = Path(trainer.args.output_dir)
+	final_done = out_dir / ".final_done"
+	best_done  = out_dir / ".best_done"
+	
+	# - Save final model explicitly (if save_strategy is set to no)
+	if is_main and trainer.args.save_strategy == "no":
+		logger.info("Saving trained model ...")	
+		trainer.save_model() # HF guards internally; only rank 0 writes	
+		#trainer.save_model(trainer.args.output_dir)
+	
+	# - Only the main process should create/update links
+	if is_main:
+		# - Link/copy "final" to the last checkpoint (if any), else to current model dir
+		last_ckpt = find_last_checkpoint(out_dir) 
+		if last_ckpt is None:
+			# No checkpoints (e.g., save_strategy="no"): point "final" to current model dir
+			logger.warning("⚠️ No checkpoints (e.g., save_strategy='no'): point 'final' to current model dir ...")
+			safe_link_or_copy(out_dir, out_dir / "final")
+		else:
+			safe_link_or_copy(last_ckpt, out_dir / "final")
+		touch(final_done)
 
+		# - Best checkpoint link (only if validation happened and path exists)
+		best_ckpt_path = getattr(trainer.state, "best_model_checkpoint", None)
+		try:
+			did_validation = (args.datalist_cv != "")
+		except NameError:
+			# If 'args' is not in scope, fall back to Trainer flags
+			did_validation = bool(getattr(trainer.args, "load_best_model_at_end", False))
+		
+		if did_validation and best_ckpt_path:
+			best_ckpt = Path(best_ckpt_path)
+			if best_ckpt.exists():
+				safe_link_or_copy(best_ckpt, out_dir / "best")
+				touch(best_done)
+			else:
+				logger.warning(f"⚠️ Best checkpoint reported but not found on disk: {best_ckpt}")
+				
+		else:
+			logger.info("ℹ️ No validation detected or no best checkpoint available; skipping 'best' link.")
+		
+	# - Final barrier so all ranks see consistent fs state before program exit
+	#barrier_if_distributed()
+	if not is_main:
+		ok = wait_for_file(final_done, timeout_s=180)
+		if not ok:
+			logger.warning("Final model file save sentinel not seen, proceeding without blocking ...")
+	
 	# - Save metrics
 	logger.info("Saving train metrics ...")        
 	trainer.log_metrics("train", train_result.metrics)

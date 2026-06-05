@@ -135,8 +135,6 @@ def get_args():
 	#parser.set_defaults(use_warmup_lr_schedule=False)
 	#parser.add_argument('-nepochs_warmup', '--nepochs_warmup', dest='nepochs_warmup', required=False, type=int, default=10, action='store',help='Number of epochs used in network training for warmup (default=100)')
 	
-	
-	
 	# - Model loss options
 	parser.add_argument("--use_weighted_loss", dest='use_weighted_loss', action="store_true", default=False, help="Use class-weighted loss (CE or focal alpha).")
 	parser.add_argument("--weight_compute_mode", dest='weight_compute_mode', type=str, choices=["balanced", "inverse", "inverse_v2"], default="balanced", help="How to compute class weights")
@@ -146,7 +144,11 @@ def get_args():
 	parser.add_argument("--loss_type", dest='loss_type', type=str, choices=["ce", "focal"], default="ce", help="Loss type: standard cross-entropy or focal loss")
 	parser.add_argument("--focal_gamma", dest='focal_gamma', type=float, default=2.0, help="Focal loss gamma (focusing parameter).")
 	parser.add_argument("--set_focal_alpha_to_mild_estimate", dest='set_focal_alpha_to_mild_estimate', action="store_true", default=False, help="Set focal alpha to mild estimate, otherwise to class_weights.")
-	
+	parser.add_argument('-sol_score', '--sol_score', dest='sol_score', choices=["accuracy", "precision", "recall", "specificity", "f1", "tss", "csi", "hss1", "hss2"], required=False, type=str, default='tss', action='store', help='Solar score used (default=tss)')
+	parser.add_argument('-sol_distribution', '--sol_distribution', dest='sol_distribution', choices=["uniform", "cosine"], required=False, type=str, default='uniform', action='store', help='Solar score distribution used (default=uniform)')
+	parser.add_argument('-sol_mode', '--sol_mode', dest='sol_mode', choices=["weighted", "average"], required=False, type=str, default='average', action='store', help='Solar score averaging mode used (default=average)')
+	parser.add_argument("--sol_add_constant", dest='sol_add_constant', action="store_true", default=False, help="Add constant (+1) to solar loss (default=false).")
+		
 	# - Image augmentations options
 	parser.add_argument('-augmenter', '--augmenter', dest='augmenter', required=False, type=str, default='v1', action='store', help='Predefined augmenter to be used (default=v1)')
 	parser.add_argument('--augmentation', dest='augmentation', action='store_true', help='Apply augmentation to train/val/test data (default=apply augmentation)')
@@ -852,6 +854,10 @@ def main():
 				loss_type=args.loss_type,                  # "ce" or "focal"
 				focal_gamma=args.focal_gamma,
 				focal_alpha=focal_alpha,              # tensor[C] or float or None
+				sol_score=args.sol_score,
+				sol_distribution=args.sol_distribution,
+				sol_mode=args.sol_mode,
+				sol_add_constant=args.sol_add_constant,
 				binary_pos_weights=class_weights_binary,
 				logitout_size=(1 if args.binary else num_labels),
 				model=model,
@@ -884,6 +890,10 @@ def main():
 				loss_type=args.loss_type,                  # "ce" or "focal"
 				focal_gamma=args.focal_gamma,
 				focal_alpha=focal_alpha,              # tensor[C] or float or None
+				sol_score=args.sol_score,
+				sol_distribution=args.sol_distribution,
+				sol_mode=args.sol_mode,
+				sol_add_constant=args.sol_add_constant,
 				binary_pos_weights=class_weights_binary,
 				logitout_size=(1 if args.binary else num_labels),
 				model=model,
@@ -1116,9 +1126,53 @@ def main():
 		#train_result = trainer.train(resume_from_checkpoint=checkpoint)
 		train_result = trainer.train()
 	
-		# - Save model
-		logger.info("Saving trained model ...")	
-		trainer.save_model()
+		# - Ensure all ranks finished training & any internal saves
+		is_main = bool(trainer.args.should_save)
+		out_dir = Path(trainer.args.output_dir)
+		final_done = out_dir / ".final_done"
+		best_done  = out_dir / ".best_done"
+	
+		# - Save final model explicitly (if save_strategy is set to no)
+		if is_main and trainer.args.save_strategy == "no":
+			logger.info("Saving trained model ...")	
+			trainer.save_model() # HF guards internally; only rank 0 writes	
+		
+		# - Only the main process should create/update links
+		if is_main:
+			# - Link/copy "final" to the last checkpoint (if any), else to current model dir
+			last_ckpt = find_last_checkpoint(out_dir) 
+			if last_ckpt is None:
+				# No checkpoints (e.g., save_strategy="no"): point "final" to current model dir
+				logger.warning("⚠️ No checkpoints (e.g., save_strategy='no'): point 'final' to current model dir ...")
+				safe_link_or_copy(out_dir, out_dir / "final")
+			else:
+				safe_link_or_copy(last_ckpt, out_dir / "final")
+			touch(final_done)
+
+			# - Best checkpoint link (only if validation happened and path exists)
+			best_ckpt_path = getattr(trainer.state, "best_model_checkpoint", None)
+			try:
+				did_validation = (args.datalist_cv != "")
+			except NameError:
+				# If 'args' is not in scope, fall back to Trainer flags
+				did_validation = bool(getattr(trainer.args, "load_best_model_at_end", False))
+		
+			if did_validation and best_ckpt_path:
+				best_ckpt = Path(best_ckpt_path)
+				if best_ckpt.exists():
+					safe_link_or_copy(best_ckpt, out_dir / "best")
+					touch(best_done)
+				else:
+					logger.warning(f"⚠️ Best checkpoint reported but not found on disk: {best_ckpt}")
+				
+			else:
+				logger.info("ℹ️ No validation detected or no best checkpoint available; skipping 'best' link.")
+		
+		# - Final barrier so all ranks see consistent fs state before program exit
+		if not is_main:
+			ok = wait_for_file(final_done, timeout_s=180)
+			if not ok:
+				logger.warning("Final model file save sentinel not seen, proceeding without blocking ...")
 
 		# - Save metrics
 		logger.info("Saving train metrics ...")        

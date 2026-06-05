@@ -20,6 +20,11 @@ import math
 import logging
 import io
 import re
+from pathlib import Path
+import shutil
+import stat
+from contextlib import suppress
+from typing import List, Dict, Any, Tuple, Union
 
 ## COMMAND-LINE ARG MODULES
 import getopt
@@ -204,6 +209,98 @@ def load_state_dict_any(path_or_dir: str) -> dict:
 			raise TypeError(f"Loaded object is not a state_dict. Got {type(obj)} from {paths[0]}")
 		return obj  
   
+def find_last_checkpoint(root: Path) -> Path | None:
+	"""Pick the latest checkpoint-* folder. Prefer the largest step number; fallback to mtime."""
+	ckpts = [p for p in root.glob("checkpoint-*") if p.is_dir()]
+	if not ckpts:
+		return None
+	def step_num(p: Path):
+		m = re.search(r"checkpoint-(\d+)", p.name)
+		return int(m.group(1)) if m else -1
+	# Prefer by step number if available
+	ckpts_by_step = sorted(ckpts, key=step_num)
+	if step_num(ckpts_by_step[-1]) >= 0:
+		return ckpts_by_step[-1]
+	# Fallback by modification time
+	return max(ckpts, key=lambda p: p.stat().st_mtime)
+	
+	
+##########################
+##     OS UTILS
+##########################
+def safe_remove_path(p: Path):
+	"""Remove existing symlink or directory/file at p (if present)."""
+	if not p.exists() and not p.is_symlink():
+		return
+	try:
+		if p.is_symlink() or p.is_file():
+			p.unlink(missing_ok=True)
+		elif p.is_dir():
+			shutil.rmtree(p)
+	except Exception as e:
+		logger.warning(f"⚠️ Could not remove {p}: {e}")
+
+def make_link_or_copy(src: Path, dst: Path):
+	"""Try to symlink; if it fails (e.g., perms), copy instead."""
+	safe_remove_path(dst)
+	try:
+		os.symlink(src, dst, target_is_directory=True)
+		logger.info(f"👉 Symlink created: {dst} -> {src}")
+	except Exception as e:
+		logger.warning(f"⚠️ Symlink failed ({e}); copying instead (uses disk space).")
+		shutil.copytree(src, dst)
+		logger.info(f"📁 Copied: {dst} (from {src})")
+
+def safe_link_or_copy(src: Path, dst: Path):
+	"""
+		Atomically create/replace dst with a symlink to src, falling back to copy if symlink fails.
+		Works whether src is a file or directory.
+	"""
+	src = Path(src)
+	dst = Path(dst)
+	tmp = dst.with_name(dst.name + f".tmp.{os.getpid()}.{time.time_ns()}")
+
+	# Remove pre-existing tmp (very unlikely) and make sure parent exists
+	with suppress(FileNotFoundError):
+		if tmp.is_symlink() or tmp.exists():
+			tmp.unlink() if tmp.is_symlink() else shutil.rmtree(tmp)
+	dst.parent.mkdir(parents=True, exist_ok=True)
+
+	try:
+		# Try symlink first (fast and space-efficient)
+		os.symlink(src, tmp, target_is_directory=src.is_dir())
+		os.replace(tmp, dst)  # atomic on POSIX
+	except OSError:
+		# Fallback: copy (handle existing dst)
+		if dst.exists() or dst.is_symlink():
+			if dst.is_symlink():
+				dst.unlink()
+			else:
+				shutil.rmtree(dst)
+		if src.is_dir():
+			shutil.copytree(src, dst)
+		else:
+			shutil.copy2(src, dst)
+        
+		# Clean up tmp if it exists
+		with suppress(FileNotFoundError):
+			if tmp.is_symlink():
+				tmp.unlink()
+			elif tmp.exists():
+				shutil.rmtree(tmp)
+
+def wait_for_file(path: Path, timeout_s=120, poll_s=0.25) -> bool:
+	t0 = time.time()
+	while time.time() - t0 < timeout_s:
+		if path.exists():
+			return True
+		time.sleep(poll_s)
+	return False
+	
+def touch(path: Path):
+	path.parent.mkdir(parents=True, exist_ok=True)
+	path.write_text("ok", encoding="utf-8")  # writing content can be more visible on some NFS setups	
+	  
 ##########################
 ##   IMAGE PROC UTILS
 ##########################
