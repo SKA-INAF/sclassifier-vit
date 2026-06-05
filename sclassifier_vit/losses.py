@@ -269,9 +269,19 @@ class ScoreOrientedLoss(nn.Module):
 			return torch.where(den > 0, TN / (den + eps), torch.zeros_like(den))
 			
 		elif which == 'f1':
-			prec = TP / torch.nan_to_num(TP + FP, nan=0.0)
-			rec  = TP / torch.nan_to_num(TP + FN, nan=0.0)
-			return 2 * (prec * rec) / torch.nan_to_num(prec + rec, nan=0.0)
+			prec_den = TP + FP
+			rec_den = TP + FN
+			
+			# Safe precision and recall
+			#prec = TP / torch.nan_to_num(TP + FP, nan=0.0)
+			#rec  = TP / torch.nan_to_num(TP + FN, nan=0.0)
+			prec = torch.where(prec_den > 0, TP / (prec_den + eps), torch.zeros_like(TP))
+			rec  = torch.where(rec_den > 0, TP / (rec_den + eps), torch.zeros_like(TP))
+			
+			# Safe F1
+			f1_den = prec + rec
+			return torch.where(f1_den > 0, 2 * (prec * rec) / (f1_den + eps), torch.zeros_like(f1_den))
+			#return 2 * (prec * rec) / torch.nan_to_num(prec + rec, nan=0.0)
 			
 		elif which == 'csi':
 			return TP / torch.nan_to_num(TP + FP + FN, nan=0.0)
