@@ -186,7 +186,7 @@ def get_single_label_target_maps(schema="morph_tags"):
 		}
 		
 	elif schema=="rg_morph":
-		# LOTSS DR2 Horton dataset
+		# LOTSS DR2 Horton dataset (class-aggregated)
 		id2target= {
 			0: 0, # FR-I
 			1: 1, # FR-II
@@ -199,6 +199,24 @@ def get_single_label_target_maps(schema="morph_tags"):
 			1: "FR-II",
 			2: "HYBRID",
 			3: "OTHER"
+		}
+		
+	elif schema=="rg_morph_horton":
+		# LOTSS DR2 Horton dataset
+		id2target= {
+			0: 0, # FR-I
+			1: 1, # FR-II
+			2: 2, # HYBRID
+			3: 3, # SPIRAL
+			4: 4 # RELAXED-DOUBLE
+		}
+			
+		id2label= {
+			0: "FR-I",
+			1: "FR-II",
+			2: "HYBRID",
+			3: "SPIRAL",
+			4: "RELAXED-DOUBLE"
 		}
 		
 	# - Compute reverse dict
